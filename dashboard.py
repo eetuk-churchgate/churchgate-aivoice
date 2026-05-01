@@ -10,6 +10,26 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ============================================
+# LOAD API KEY - Streamlit Cloud + Local .env
+# ============================================
+API_KEY = None
+
+# Try Streamlit Secrets first (for deployed app)
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except:
+    pass
+
+# Fall back to .env file (for local development)
+if not API_KEY:
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        API_KEY = os.getenv("GEMINI_API_KEY")
+    except:
+        pass
+
+# ============================================
 # SET WORKING DIRECTORY
 # ============================================
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +69,6 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Header */
     .header-banner {
         background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
         border-radius: 24px;
@@ -81,7 +100,6 @@ st.markdown("""
         margin-left: 8px; vertical-align: middle;
     }
     
-    /* Metrics */
     .metric-box {
         background: white; border: 1px solid #e2e8f0; border-radius: 20px;
         padding: 1.5rem 1.2rem; text-align: center;
@@ -98,12 +116,10 @@ st.markdown("""
     .metric-value { font-size: 2rem; font-weight: 800; color: #0f172a; }
     .metric-label { font-size: 0.85rem; color: #64748b; font-weight: 500; margin-top: 0.2rem; }
     
-    /* Status badges */
     .status-pass { background: #059669; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; letter-spacing: 0.5px; }
     .status-warn { background: #d97706; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     .status-fail { background: #dc2626; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     
-    /* Upload area */
     div[data-testid="stFileUploader"] {
         border: 2px dashed #3b82f6;
         border-radius: 20px;
@@ -116,11 +132,11 @@ st.markdown("""
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     }
     
-    /* Buttons */
     .stButton > button {
         border-radius: 14px; font-weight: 700; padding: 0.85rem 2.5rem; font-size: 1.05rem;
         background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e40af 100%);
         color: white; border: none; transition: all 0.3s; letter-spacing: 0.5px;
+        width: 100%;
     }
     .stButton > button:hover {
         transform: translateY(-2px);
@@ -128,7 +144,6 @@ st.markdown("""
         background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
     }
     
-    /* Sidebar */
     .sidebar-header {
         text-align: center; padding: 1.5rem 0.5rem;
         border-bottom: 1px solid #e2e8f0; margin-bottom: 1.2rem;
@@ -138,7 +153,6 @@ st.markdown("""
     .sidebar-company { font-weight: 800; font-size: 1.2rem; color: #0f172a; margin-top: 0.6rem; }
     .sidebar-subtitle { font-size: 0.78rem; color: #64748b; font-weight: 500; }
     
-    /* Cards */
     .section-divider {
         height: 1px;
         background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
@@ -154,7 +168,6 @@ st.markdown("""
         height: 100%;
     }
     
-    /* Expander styling */
     .streamlit-expanderHeader {
         font-weight: 700 !important;
         font-size: 1rem !important;
@@ -162,16 +175,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# ============================================
-# LOAD API KEY
-# ============================================
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    API_KEY = os.getenv("GEMINI_API_KEY")
-except:
-    API_KEY = None
 
 # ============================================
 # AI ENGINE
@@ -295,11 +298,12 @@ with st.sidebar:
     st.markdown('<p class="sidebar-subtitle">Invoice Processing System</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    if not API_KEY:
-        api_input = st.text_input("🔑 Gemini API Key", type="password")
-        if api_input: API_KEY = api_input; st.success("Key active")
-    else:
+    # API Key status
+    if API_KEY:
         st.success("🔑 API Key Active")
+    else:
+        st.error("🔑 API Key Missing")
+        st.info("Add GEMINI_API_KEY to Streamlit Secrets or .env file")
     
     st.markdown("---")
     st.markdown("### 📊 Live Statistics")
@@ -318,8 +322,9 @@ with st.sidebar:
             st.metric(f"💱 {cur}", f"{cur_total:,.2f}")
     
     st.markdown("---")
-    if st.button("📂 Open Output Folder", use_container_width=True): os.startfile(os.path.abspath("output"))
-    if st.button("📁 Open Input Folder", use_container_width=True): os.startfile(os.path.abspath("input"))
+    if st.button("📂 Open Output Folder", use_container_width=True):
+        try: os.startfile(os.path.abspath("output"))
+        except: st.info("Output folder available on local machine only")
     if st.button("🗑️ Clear Session", use_container_width=True):
         st.session_state.count = 0; st.session_state.total_val = 0
         st.session_state.history = []; st.session_state.results = []
@@ -348,7 +353,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ============================================
-# METRICS ROW WITH COLORED TOPS
+# METRICS
 # ============================================
 m1,m2,m3,m4 = st.columns(4)
 with m1:
@@ -364,7 +369,7 @@ with m4:
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ============================================
-# CHARTS (if we have data)
+# CHARTS
 # ============================================
 if st.session_state.history:
     st.markdown("### 📈 Processing Analytics")
@@ -428,7 +433,7 @@ if st.session_state.history:
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ============================================
-# UPLOAD SECTION
+# UPLOAD
 # ============================================
 st.markdown("### 📤 Upload Invoices")
 uploaded = st.file_uploader(
@@ -489,6 +494,8 @@ if uploaded and API_KEY:
         time_container.success(f"✅ {len(uploaded)} invoice(s) processed in {elapsed:.1f}s")
         st.session_state.results = results
         st.rerun()
+elif uploaded and not API_KEY:
+    st.error("🔑 API Key not configured. Add GEMINI_API_KEY to Streamlit Secrets (Settings > Secrets).")
 
 # ============================================
 # RESULTS
@@ -497,7 +504,6 @@ if 'results' in st.session_state and st.session_state.results:
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown("### 📋 Extraction Results")
     
-    # Summary counts
     passed = sum(1 for r in st.session_state.results if not "error" in r and r.get('_validation',{}).get('status') == 'PASS')
     warned = sum(1 for r in st.session_state.results if not "error" in r and r.get('_validation',{}).get('status') == 'WARN')
     failed = sum(1 for r in st.session_state.results if not "error" in r and r.get('_validation',{}).get('status') == 'FAIL')
@@ -552,15 +558,12 @@ if 'results' in st.session_state and st.session_state.results:
                 st.progress(conf/100, text=f"Confidence: {conf}%")
                 
                 if v.get('errors'):
-                    for e in v['errors']:
-                        st.error(e)
+                    for e in v['errors']: st.error(e)
                 if v.get('warnings'):
-                    for w in v['warnings']:
-                        st.warning(w)
+                    for w in v['warnings']: st.warning(w)
                 if not v.get('errors') and not v.get('warnings'):
                     st.success("All checks passed")
             
-            # Line Items
             items = res.get('line_items', [])
             if items:
                 st.markdown("---")
@@ -568,7 +571,6 @@ if 'results' in st.session_state and st.session_state.results:
                 df_items = pd.DataFrame(items)
                 st.dataframe(df_items, use_container_width=True, hide_index=True, height=min(200, 35*len(items)+38))
             
-            # Export
             st.markdown("---")
             st.markdown("**📥 Export:**")
             ex1, ex2 = st.columns(2)
@@ -584,25 +586,11 @@ if 'results' in st.session_state and st.session_state.results:
                     'Status': v.get('status',''),
                     'Confidence': v.get('confidence_score',0)
                 }]).to_csv(index=False)
-                st.download_button(
-                    "📊 Download Excel (CSV)",
-                    csv_d,
-                    f"{res.get('invoice_number','invoice')}.csv",
-                    "text/csv",
-                    use_container_width=True,
-                    key=f"csv_{i}"
-                )
+                st.download_button("📊 Download Excel (CSV)", csv_d, f"{res.get('invoice_number','invoice')}.csv", "text/csv", use_container_width=True, key=f"csv_{i}")
             with ex2:
                 pdf_bytes = generate_pdf_report(res)
                 if pdf_bytes:
-                    st.download_button(
-                        "📕 Download PDF Report",
-                        pdf_bytes,
-                        f"{res.get('invoice_number','invoice')}.pdf",
-                        "application/pdf",
-                        use_container_width=True,
-                        key=f"pdf_{i}"
-                    )
+                    st.download_button("📕 Download PDF Report", pdf_bytes, f"{res.get('invoice_number','invoice')}.pdf", "application/pdf", use_container_width=True, key=f"pdf_{i}")
 
 else:
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
