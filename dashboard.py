@@ -1,6 +1,6 @@
 """
 Churchgate-AI Enterprise Invoice Processing Dashboard
-Includes ERP Matching Engine (PO/WO/Abstract)
+Includes ERP Matching Engine (PO/WO/Abstract) - All Formats
 """
 import streamlit as st
 import os, json, base64, requests, pandas as pd, time, re, numpy as np
@@ -102,7 +102,7 @@ st.markdown("""
     .status-approved { background: #7c3aed; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     
     div[data-testid="stFileUploader"] {
-        border: 2px dashed #3b82f6; border-radius: 20px; padding: 2.5rem;
+        border: 2px dashed #3b82f6; border-radius: 20px; padding: 2rem;
         background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #dbeafe 100%);
     }
     .stButton > button {
@@ -133,7 +133,7 @@ class Extractor:
     
     def extract(self, image_bytes):
         b64 = base64.b64encode(image_bytes).decode('utf-8')
-        prompt = "Extract ALL invoice data. Return ONLY valid JSON with: vendor_name, invoice_number, po_number (if visible), invoice_date, due_date, subtotal, tax_amount, total_amount, currency, line_items."
+        prompt = "Extract ALL data. Return ONLY valid JSON with: vendor_name, invoice_number, po_number, invoice_date, due_date, subtotal, tax_amount, total_amount, currency, line_items."
         payload = {"contents":[{"parts":[{"text":prompt},{"inline_data":{"mime_type":"image/jpeg","data":b64}}]}]}
         for attempt in range(1, 4):
             try:
@@ -205,7 +205,7 @@ def generate_pdf_report(data):
         items = data.get('line_items',[])
         if items:
             pdf.set_fill_color(52,73,94); pdf.set_text_color(255,255,255)
-            pdf.set_font('Arial','B',11); pdf.cell(0,8,f'  LINE ITEMS',0,1,'L',True)
+            pdf.set_font('Arial','B',11); pdf.cell(0,8,'  LINE ITEMS',0,1,'L',True)
             pdf.set_text_color(0,0,0); pdf.ln(3)
             for item in items[:20]:
                 pdf.set_font('Arial','',8)
@@ -242,9 +242,11 @@ with st.sidebar:
     if st.button("🗑️ Clear Session", use_container_width=True):
         st.session_state.count = 0; st.session_state.total_val = 0
         st.session_state.history = []; st.session_state.results = []
+        st.session_state.erp_loaded = False
+        st.session_state.erp_po_data = []; st.session_state.erp_vendor_data = []
         st.rerun()
     st.markdown("---")
-    st.caption("v3.0 Enterprise | Gemini AI")
+    st.caption("v4.0 Enterprise | Gemini AI")
     st.caption(f"© {datetime.now().year} Churchgate Group")
 
 # ============================================
@@ -266,7 +268,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ============================================
-# TABS: PROCESSING | ERP MATCHING
+# TABS
 # ============================================
 tab1, tab2 = st.tabs(["📄 Invoice Processing", "🔗 ERP Matching (PO/WO/Abstract)"])
 
@@ -274,7 +276,6 @@ tab1, tab2 = st.tabs(["📄 Invoice Processing", "🔗 ERP Matching (PO/WO/Abstr
 # TAB 1: INVOICE PROCESSING
 # ============================================
 with tab1:
-    # Metrics
     m1,m2,m3,m4 = st.columns(4)
     with m1: st.markdown(f'<div class="metric-box"><div class="metric-icon">📄</div><div class="metric-value">{st.session_state.count}</div><div class="metric-label">Processed</div></div>', unsafe_allow_html=True)
     with m2: st.markdown(f'<div class="metric-box"><div class="metric-icon">💰</div><div class="metric-value">{"₦"+f"{st.session_state.total_val:,.0f}" if st.session_state.total_val > 0 else "—"}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
@@ -368,97 +369,207 @@ with tab1:
                     if pdf_b: st.download_button("📕 PDF", pdf_b, f"{res.get('invoice_number','invoice')}.pdf", "application/pdf", use_container_width=True, key=f"pdf_{i}")
 
 # ============================================
-# TAB 2: ERP MATCHING
+# TAB 2: ERP MATCHING (ALL FORMATS)
 # ============================================
 with tab2:
     st.markdown("### 🔗 ERP Matching Engine")
-    st.markdown("Match extracted invoices against Purchase Orders, Work Orders, and Payment Abstracts")
+    st.markdown("Match extracted invoices against Purchase Orders, Work Orders, and Payment Abstracts — **PDF, Excel, or scanned documents**")
     
-    # Upload ERP data
     st.markdown("#### 📂 Load ERP Reference Data")
-    erp_col1, erp_col2, erp_col3 = st.columns(3)
-    with erp_col1:
-        po_file = st.file_uploader("Purchase Orders (Excel)", type=['xlsx','xls'], key="po_upload")
-    with erp_col2:
-        wo_file = st.file_uploader("Work Orders (Excel)", type=['xlsx','xls'], key="wo_upload")
-    with erp_col3:
-        vendor_file = st.file_uploader("Vendor Master (Excel)", type=['xlsx','xls'], key="vendor_upload")
     
-    # Load ERP data
-    erp_loaded = False
-    if po_file or vendor_file:
-        if st.button("📥 Load ERP Data", use_container_width=True):
-            try:
-                from erp_matcher import ERPMatcher
-                st.session_state.matcher = ERPMatcher()
-                
-                if po_file:
-                    po_path = f"/tmp/po_{datetime.now().timestamp()}.xlsx"
-                    with open(po_path, 'wb') as f: f.write(po_file.read())
-                    st.session_state.matcher.load_erp_data(po_file=po_path)
-                    st.success(f"✅ Loaded Purchase Orders")
-                
-                if vendor_file:
-                    vendor_path = f"/tmp/vendor_{datetime.now().timestamp()}.xlsx"
-                    with open(vendor_path, 'wb') as f: f.write(vendor_file.read())
-                    st.session_state.matcher.load_erp_data(vendor_file=vendor_path)
-                    st.success(f"✅ Loaded Vendor Master")
-                
-                erp_loaded = True
-            except Exception as e:
-                st.error(f"Error loading ERP data: {e}")
+    erp_col1, erp_col2, erp_col3 = st.columns(3)
+    
+    with erp_col1:
+        po_files = st.file_uploader(
+            "📄 Purchase Orders / Abstracts",
+            type=['pdf', 'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'xlsx', 'xls'],
+            accept_multiple_files=True,
+            key="po_upload",
+            help="Upload PO documents: PDF, Excel, or scanned images"
+        )
+    
+    with erp_col2:
+        wo_files = st.file_uploader(
+            "📄 Work Orders / Contracts",
+            type=['pdf', 'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'xlsx', 'xls'],
+            accept_multiple_files=True,
+            key="wo_upload",
+            help="Upload WO documents: PDF, Excel, or scanned images"
+        )
+    
+    with erp_col3:
+        vendor_files = st.file_uploader(
+            "📄 Vendor Master List",
+            type=['pdf', 'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'xlsx', 'xls'],
+            accept_multiple_files=True,
+            key="vendor_upload",
+            help="Upload approved vendor list: PDF, Excel, or scanned images"
+        )
+    
+    erp_ready = (po_files or vendor_files)
+    
+    if erp_ready and API_KEY:
+        if st.button("📥 Load & Extract ERP Data", type="primary", use_container_width=True):
+            with st.spinner("AI extracting data from ERP documents..."):
+                try:
+                    from erp_matcher import ERPMatcher
+                    st.session_state.matcher = ERPMatcher()
+                    extractor = Extractor(API_KEY)
+                    docs_processed = 0
+                    
+                    # Process PO files
+                    if po_files:
+                        st.info(f"Processing {len(po_files)} PO/Abstract document(s)...")
+                        st.session_state.erp_po_data = []
+                        for po_file in po_files:
+                            fb = po_file.read()
+                            suf = Path(po_file.name).suffix.lower()
+                            img = None
+                            if suf == '.pdf': img = pdf_to_bytes(fb)
+                            elif suf in ['.xlsx', '.xls']: img = excel_to_bytes(fb)
+                            else: img = fb
+                            if img:
+                                extracted = extractor.extract(img)
+                                if 'error' not in extracted:
+                                    extracted['_source_file'] = po_file.name
+                                    extracted['_doc_type'] = 'PO'
+                                    st.session_state.erp_po_data.append(extracted)
+                                    docs_processed += 1
+                    
+                    # Process Vendor files
+                    if vendor_files:
+                        st.info(f"Processing {len(vendor_files)} vendor document(s)...")
+                        st.session_state.erp_vendor_data = []
+                        for vendor_file in vendor_files:
+                            fb = vendor_file.read()
+                            suf = Path(vendor_file.name).suffix.lower()
+                            img = None
+                            if suf == '.pdf': img = pdf_to_bytes(fb)
+                            elif suf in ['.xlsx', '.xls']: img = excel_to_bytes(fb)
+                            else: img = fb
+                            if img:
+                                extracted = extractor.extract(img)
+                                if 'error' not in extracted:
+                                    extracted['_source_file'] = vendor_file.name
+                                    extracted['_doc_type'] = 'VENDOR'
+                                    st.session_state.erp_vendor_data.append(extracted)
+                                    docs_processed += 1
+                    
+                    st.success(f"✅ Extracted data from {docs_processed} ERP document(s)")
+                    
+                    # Build vendor master from extracted data
+                    if st.session_state.get('erp_vendor_data'):
+                        vendor_names = []
+                        for vd in st.session_state.erp_vendor_data:
+                            if vd.get('vendor_name'):
+                                vendor_names.append(vd['vendor_name'])
+                        if vendor_names:
+                            vendor_df = pd.DataFrame({'vendor_name': vendor_names})
+                            vendor_path = f"/tmp/vendor_master_{datetime.now().timestamp()}.xlsx"
+                            vendor_df.to_excel(vendor_path, index=False)
+                            st.session_state.matcher.load_erp_data(vendor_file=vendor_path)
+                    
+                    # Build PO database from extracted data
+                    if st.session_state.get('erp_po_data'):
+                        po_rows = []
+                        for pd_data in st.session_state.erp_po_data:
+                            po_rows.append({
+                                'po_number': pd_data.get('po_number') or pd_data.get('invoice_number', 'N/A'),
+                                'vendor_name': pd_data.get('vendor_name', ''),
+                                'amount': pd_data.get('total_amount', 0),
+                                'description': pd_data.get('_source_file', ''),
+                            })
+                        if po_rows:
+                            po_df = pd.DataFrame(po_rows)
+                            po_path = f"/tmp/po_master_{datetime.now().timestamp()}.xlsx"
+                            po_df.to_excel(po_path, index=False)
+                            st.session_state.matcher.load_erp_data(po_file=po_path)
+                    
+                    st.session_state.erp_loaded = True
+                    
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    
+    # Show ERP data summary
+    if st.session_state.get('erp_loaded'):
+        st.markdown("---")
+        st.success("✅ ERP Data Loaded & Ready for Matching")
+        sc1, sc2, sc3 = st.columns(3)
+        sc1.metric("📄 PO/Abstract Docs", len(st.session_state.get('erp_po_data', [])))
+        sc2.metric("🏢 Vendor Records", len(st.session_state.get('erp_vendor_data', [])))
+        sc3.metric("🧾 Invoices Ready", len([r for r in st.session_state.get('results', []) if 'error' not in r]))
     
     # Run Matching
-    if 'matcher' in st.session_state and 'results' in st.session_state:
+    if st.session_state.get('matcher') and st.session_state.get('results'):
         invoices = [r for r in st.session_state.results if 'error' not in r]
         
         if invoices:
             st.markdown("---")
-            st.markdown(f"#### 🔍 Match {len(invoices)} Invoice(s) Against ERP")
+            st.markdown(f"#### 🔍 Match {len(invoices)} Invoice(s) Against ERP Records")
             
             if st.button("🔍 Run ERP Matching", type="primary", use_container_width=True):
                 with st.spinner("Matching invoices against ERP records..."):
                     match_results = st.session_state.matcher.match_batch(invoices)
                     st.session_state.match_results = match_results
                     
-                    # Summary
                     summary = st.session_state.matcher.get_summary()
+                    st.markdown("##### 📊 Matching Summary")
                     st.dataframe(summary, use_container_width=True, hide_index=True)
                     
-                    # Detailed results
+                    st.markdown("---")
+                    st.markdown("##### 📋 Detailed Results")
+                    
                     for i, r in enumerate(match_results):
-                        status_color = {
-                            'APPROVED_FOR_PAYMENT': 'status-pass',
-                            'APPROVED_WITH_NOTES': 'status-warn',
-                            'REVIEW_REQUIRED': 'status-fail'
-                        }.get(r['status'], 'status-fail')
+                        status_color = {'APPROVED_FOR_PAYMENT': 'status-pass', 'APPROVED_WITH_NOTES': 'status-warn', 'REVIEW_REQUIRED': 'status-fail'}.get(r['status'], 'status-fail')
+                        status_icon = '✅' if 'APPROVED' in r['status'] else '❌'
                         
-                        with st.expander(f"{'✅' if 'APPROVED' in r['status'] else '❌'} {r.get('vendor_name','')} — {r.get('invoice_number','')} | Status: {r['status']}", expanded=(i==0)):
-                            col_a, col_b = st.columns(2)
-                            with col_a:
-                                st.markdown(f"**Invoice:** {r.get('invoice_number','N/A')}")
+                        with st.expander(f"{status_icon} {r.get('vendor_name','')[:30]} — Invoice: {r.get('invoice_number','')} | {r['status']}", expanded=(i==0)):
+                            cA, cB = st.columns(2)
+                            with cA:
+                                st.markdown(f"**Invoice #:** {r.get('invoice_number','N/A')}")
                                 st.markdown(f"**Vendor:** {r.get('vendor_name','N/A')}")
                                 st.markdown(f"**Total:** {r.get('invoice_total',0):,.2f}")
-                                if r.get('po_number'):
-                                    st.markdown(f"**PO #:** {r['po_number']}")
-                            with col_b:
+                                if r.get('po_number'): st.markdown(f"**PO #:** {r['po_number']}")
+                            with cB:
                                 st.markdown(f'<span class="{status_color}">{r["status"]}</span>', unsafe_allow_html=True)
-                                st.metric("Match Confidence", f"{r.get('confidence',0)}%")
+                                st.metric("Confidence", f"{r.get('confidence',0)}%")
                             
                             if r.get('flags'):
                                 st.markdown("**🚩 Flags:**")
                                 for flag in r['flags']:
-                                    sev_color = {'HIGH':'🔴','MEDIUM':'🟡','LOW':'🟢'}.get(flag['severity'],'⚪')
-                                    st.markdown(f"{sev_color} [{flag['severity']}] {flag['message']}")
+                                    sev = {'HIGH':'🔴','MEDIUM':'🟡','LOW':'🟢'}.get(flag['severity'],'⚪')
+                                    st.markdown(f"{sev} **[{flag['severity']}]** {flag['message']}")
+                            
+                            if r.get('matches'):
+                                st.markdown("**✅ Matches:**")
+                                for m in r['matches']:
+                                    st.markdown(f"• **{m.get('type','')}**: {m.get('matched_to', m.get('po_number',''))} (Score: {m.get('score',0)}%)")
                     
-                    # Export matching report
+                    st.markdown("---")
                     try:
                         report_path = st.session_state.matcher.export_report()
                         with open(report_path, 'rb') as f:
                             st.download_button("📊 Download Matching Report (Excel)", f.read(), Path(report_path).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
                     except:
-                        pass
+                        st.warning("Report download available on local machine")
         else:
-            st.info("Process invoices in the 'Invoice Processing' tab first, then return here for ERP matching.")
-    else:
-        st.info("📤 Upload ERP data above and process invoices in the 'Invoice Processing' tab to enable matching.")
+            st.info("📤 Process invoices in the 'Invoice Processing' tab first, then return here for ERP matching.")
+    elif not erp_ready:
+        st.info("""
+        ### 📤 How to Use ERP Matching
+        
+        1. **Upload ERP reference documents** above — PDF, Excel, or scanned images
+        2. **Click 'Load & Extract ERP Data'** — AI extracts PO/WO/Vendor info
+        3. **Process invoices** in the Invoice Processing tab
+        4. **Return here** and click **'Run ERP Matching'**
+        5. **Review matches, flags, and discrepancies**
+        6. **Download the matching report**
+        
+        ---
+        ### Supported ERP Formats
+        | Format | Examples |
+        |---|---|
+        | 📄 PDF | Purchase Orders, Abstracts |
+        | 📊 Excel | PO lists, Vendor masters |
+        | 🖼️ Scanned | Scanned documents, photos |
+        """)
