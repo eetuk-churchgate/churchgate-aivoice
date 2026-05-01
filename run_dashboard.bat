@@ -1,0 +1,5 @@
+@echo off
+title Churchgate-AI Dashboard
+cd /d "%~dp0"
+start "" http://localhost:8501
+streamlit run dashboard.py
