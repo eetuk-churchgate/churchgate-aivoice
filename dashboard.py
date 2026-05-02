@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ============================================
-# LOAD API KEY - Streamlit Cloud + Local .env
+# LOAD API KEY
 # ============================================
 API_KEY = None
 try:
@@ -64,83 +64,17 @@ st.markdown("""
     
     .brs-header {
         background: linear-gradient(135deg, #e8ecf1 0%, #d5dbe3 50%, #e8ecf1 100%);
-        border-radius: 0;
-        padding: 1.5rem 2rem;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 28px;
-        border-bottom: 2px solid #c0c7cf;
+        border-radius: 0; padding: 1.5rem 2rem; margin-bottom: 2rem;
+        display: flex; align-items: center; gap: 28px; border-bottom: 2px solid #c0c7cf;
     }
-    .brs-logo {
-        width: 130px;
-        height: 130px;
-        border-radius: 0;
-        object-fit: contain;
-        background: transparent;
-        padding: 0;
-        box-shadow: none;
-        flex-shrink: 0;
-    }
-    .brs-logo-placeholder {
-        width: 130px;
-        height: 130px;
-        border-radius: 0;
-        background: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 5rem;
-        box-shadow: none;
-        flex-shrink: 0;
-    }
-    .brs-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #1a1a2e;
-        letter-spacing: -0.5px;
-        margin: 0;
-        line-height: 1.2;
-    }
-    .brs-subtitle {
-        font-size: 0.95rem;
-        color: #4a5568;
-        font-weight: 500;
-        margin: 6px 0 0 0;
-    }
-    .brs-badge {
-        display: inline-block;
-        background: #2563eb;
-        color: white;
-        padding: 0.25rem 0.9rem;
-        border-radius: 14px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        margin-left: 8px;
-        vertical-align: middle;
-        letter-spacing: 0.5px;
-    }
+    .brs-logo { width: 130px; height: 130px; border-radius: 0; object-fit: contain; background: transparent; padding: 0; box-shadow: none; flex-shrink: 0; }
+    .brs-logo-placeholder { width: 130px; height: 130px; border-radius: 0; background: transparent; display: flex; align-items: center; justify-content: center; font-size: 5rem; box-shadow: none; flex-shrink: 0; }
+    .brs-title { font-size: 2.2rem; font-weight: 800; color: #1a1a2e; letter-spacing: -0.5px; margin: 0; line-height: 1.2; }
+    .brs-subtitle { font-size: 0.95rem; color: #4a5568; font-weight: 500; margin: 6px 0 0 0; }
+    .brs-badge { display: inline-block; background: #2563eb; color: white; padding: 0.25rem 0.9rem; border-radius: 14px; font-size: 0.7rem; font-weight: 700; margin-left: 8px; vertical-align: middle; }
     
-    .metric-box {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 1.5rem 1.2rem;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-        transition: all 0.25s;
-        position: relative;
-        overflow: hidden;
-    }
-    .metric-box::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa);
-    }
+    .metric-box { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem 1.2rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.04); transition: all 0.25s; position: relative; overflow: hidden; }
+    .metric-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa); }
     .metric-box:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
     .metric-icon { font-size: 2rem; margin-bottom: 0.4rem; }
     .metric-value { font-size: 1.8rem; font-weight: 800; color: #1a1a2e; }
@@ -150,61 +84,39 @@ st.markdown("""
     .status-warn { background: #d97706; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     .status-fail { background: #dc2626; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     
-    div[data-testid="stFileUploader"] {
-        border: 2px dashed #3b82f6;
-        border-radius: 16px;
-        padding: 2rem;
-        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #dbeafe 100%);
-    }
-    .stButton > button {
-        border-radius: 12px;
-        font-weight: 700;
-        padding: 0.8rem 2.5rem;
-        font-size: 1rem;
-        background: linear-gradient(135deg, #1a1a2e 0%, #1e3a5f 50%, #2563eb 100%);
-        color: white;
-        border: none;
-        transition: all 0.3s;
-        width: 100%;
-    }
+    div[data-testid="stFileUploader"] { border: 2px dashed #3b82f6; border-radius: 16px; padding: 2rem; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #dbeafe 100%); }
+    .stButton > button { border-radius: 12px; font-weight: 700; padding: 0.8rem 2.5rem; font-size: 1rem; background: linear-gradient(135deg, #1a1a2e 0%, #1e3a5f 50%, #2563eb 100%); color: white; border: none; transition: all 0.3s; width: 100%; }
     .stButton > button:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,99,235,0.4); }
     
-    .sidebar-header {
-        text-align: center;
-        padding: 1.5rem 0.5rem;
-        border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 1.2rem;
-        background: #f8fafc;
-        border-radius: 16px;
-    }
-    .sidebar-logo-small {
-        width: 110px;
-        height: 110px;
-        border-radius: 0;
-        object-fit: contain;
-        display: block;
-        margin: 0 auto 0.6rem;
-        box-shadow: none;
-        background: transparent;
-        padding: 0;
-    }
+    .sidebar-header { text-align: center; padding: 1.5rem 0.5rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 1.2rem; background: #f8fafc; border-radius: 16px; }
+    .sidebar-logo-small { width: 110px; height: 110px; border-radius: 0; object-fit: contain; display: block; margin: 0 auto 0.6rem; box-shadow: none; background: transparent; padding: 0; }
     .sidebar-company { font-weight: 800; font-size: 1.1rem; color: #1a1a2e; margin-top: 0.5rem; }
     .sidebar-subtitle { font-size: 0.75rem; color: #64748b; font-weight: 500; }
-    
-    .section-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
-        margin: 2rem 0;
-    }
-    .chart-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
+    .section-divider { height: 1px; background: linear-gradient(90deg, transparent, #cbd5e1, transparent); margin: 2rem 0; }
+    .chart-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 </style>
 """, unsafe_allow_html=True)
+
+# ============================================
+# SAFE GETTER HELPER
+# ============================================
+def safe_str(val, default='N/A', max_len=None):
+    """Safely convert any value to string, handling None"""
+    if val is None:
+        return default
+    s = str(val)
+    if max_len and len(s) > max_len:
+        s = s[:max_len]
+    return s
+
+def safe_float(val, default=0.0):
+    """Safely convert any value to float"""
+    if val is None:
+        return default
+    try:
+        return float(val)
+    except:
+        return default
 
 # ============================================
 # AI ENGINE
@@ -253,9 +165,6 @@ def excel_to_bytes(b):
         buf=BytesIO(); plt.savefig(buf,bbox_inches='tight',dpi=150,pad_inches=0.1,format='jpg'); plt.close(); return buf.getvalue()
     except: return None
 
-# ============================================
-# PDF REPORT - FULLY FIXED
-# ============================================
 def generate_pdf_report(data):
     try:
         from fpdf import FPDF
@@ -263,135 +172,72 @@ def generate_pdf_report(data):
             if not txt: return ''
             return str(txt).encode('ascii','replace').decode('ascii')
         
-        pdf = FPDF()
-        pdf.add_page()
+        pdf = FPDF(); pdf.add_page()
         v = data.get('_validation', {})
-        cur = data.get('currency', 'NGN')
+        cur = safe_str(data.get('currency'), 'NGN')
         
-        # HEADER
-        pdf.set_fill_color(25, 50, 80)
-        pdf.rect(0, 0, 210, 40, 'F')
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font('Arial', 'B', 22)
-        pdf.set_y(7)
-        pdf.cell(0, 11, 'CHURCHGATE INVOICE REPORT', 0, 1, 'C')
-        pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 7, 'AI-Powered Extraction & Enterprise Validation', 0, 1, 'C')
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(12)
+        pdf.set_fill_color(25,50,80); pdf.rect(0,0,210,40,'F')
+        pdf.set_text_color(255,255,255); pdf.set_font('Arial','B',22)
+        pdf.set_y(7); pdf.cell(0,11,'CHURCHGATE INVOICE REPORT',0,1,'C')
+        pdf.set_font('Arial','',10); pdf.cell(0,7,'AI-Powered Extraction & Enterprise Validation',0,1,'C')
+        pdf.set_text_color(0,0,0); pdf.ln(12)
         
-        # STATUS BADGE
-        sts = v.get('status', '?')
-        conf = v.get('confidence_score', 0)
-        if sts == 'PASS':
-            rc, gc, bc, tx = 39, 174, 96, 'PASSED - VERIFIED'
-        elif sts == 'WARN':
-            rc, gc, bc, tx = 243, 156, 18, 'WARNINGS PRESENT'
-        else:
-            rc, gc, bc, tx = 231, 76, 60, 'REVIEW REQUIRED'
+        sts = v.get('status','?'); conf = v.get('confidence_score',0)
+        if sts == 'PASS': rc,gc,bc,tx = 39,174,96,'PASSED - VERIFIED'
+        elif sts == 'WARN': rc,gc,bc,tx = 243,156,18,'WARNINGS PRESENT'
+        else: rc,gc,bc,tx = 231,76,60,'REVIEW REQUIRED'
         
-        pdf.set_fill_color(rc, gc, bc)
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font('Arial', 'B', 13)
-        pdf.cell(0, 10, f'  STATUS: {tx}  |  Confidence: {conf}%', 0, 1, 'L', True)
-        pdf.set_text_color(0, 0, 0)
+        pdf.set_fill_color(rc,gc,bc); pdf.set_text_color(255,255,255)
+        pdf.set_font('Arial','B',13); pdf.cell(0,10,f'  STATUS: {tx}  |  Confidence: {conf}%',0,1,'L',True)
+        pdf.set_text_color(0,0,0); pdf.ln(6)
+        
+        pdf.set_fill_color(52,73,94); pdf.set_text_color(255,255,255)
+        pdf.set_font('Arial','B',12); pdf.cell(0,9,'  VENDOR & INVOICE DETAILS',0,1,'L',True)
+        pdf.set_text_color(0,0,0); pdf.ln(5)
+        for l,vl in [('Vendor:',clean(safe_str(data.get('vendor_name')))),('Invoice #:',clean(safe_str(data.get('invoice_number')))),('Date:',clean(safe_str(data.get('invoice_date')))),('Due:',clean(safe_str(data.get('due_date'),'Not specified'))),('PO #:',clean(safe_str(data.get('po_number'),'N/A')))]:
+            pdf.set_font('Arial','B',10); pdf.cell(38,7,l,0,0)
+            pdf.set_font('Arial','',10); pdf.cell(0,7,vl,0,1)
+        pdf.ln(5)
+        
+        pdf.set_fill_color(52,73,94); pdf.set_text_color(255,255,255)
+        pdf.set_font('Arial','B',12); pdf.cell(0,9,'  FINANCIAL SUMMARY',0,1,'L',True)
+        pdf.set_text_color(0,0,0); pdf.ln(5)
+        subtotal = safe_float(data.get('subtotal'))
+        tax = safe_float(data.get('tax_amount'))
+        total = safe_float(data.get('total_amount'))
+        for l,vl in [('Subtotal:',f"{cur} {subtotal:,.2f}"),('Tax Amount:',f"{cur} {tax:,.2f}")]:
+            pdf.set_font('Arial','B',10); pdf.cell(38,7,l,0,0)
+            pdf.set_font('Arial','',10); pdf.cell(0,7,vl,0,1)
+        pdf.set_fill_color(230,240,250); pdf.set_font('Arial','B',12)
+        pdf.cell(38,10,'TOTAL DUE:',0,0,'L',True)
+        pdf.cell(0,10,f"{cur} {total:,.2f}",0,1,'L',True)
         pdf.ln(6)
         
-        # VENDOR & INVOICE DETAILS
-        pdf.set_fill_color(52, 73, 94)
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 9, '  VENDOR & INVOICE DETAILS', 0, 1, 'L', True)
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(5)
-        
-        detail_rows = [
-            ('Vendor Name:', clean(data.get('vendor_name', 'N/A'))),
-            ('Invoice Number:', clean(data.get('invoice_number', 'N/A'))),
-            ('Invoice Date:', clean(data.get('invoice_date', 'N/A'))),
-            ('Due Date:', clean(data.get('due_date', 'N/A') or 'Not specified')),
-            ('PO Number:', clean(data.get('po_number', 'N/A') or 'N/A')),
-        ]
-        for label, value in detail_rows:
-            pdf.set_font('Arial', 'B', 10)
-            pdf.cell(40, 7, label, 0, 0)
-            pdf.set_font('Arial', '', 10)
-            pdf.cell(0, 7, value, 0, 1)
-        
-        pdf.ln(5)
-        
-        # FINANCIAL SUMMARY
-        pdf.set_fill_color(52, 73, 94)
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 9, '  FINANCIAL SUMMARY', 0, 1, 'L', True)
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(5)
-        
-        subtotal = data.get('subtotal', 0) or 0
-        tax = data.get('tax_amount', 0) or 0
-        total = data.get('total_amount', 0) or 0
-        
-        fin_rows = [
-            ('Subtotal:', f"{cur} {subtotal:,.2f}"),
-            ('Tax Amount:', f"{cur} {tax:,.2f}"),
-        ]
-        for label, value in fin_rows:
-            pdf.set_font('Arial', 'B', 10)
-            pdf.cell(40, 7, label, 0, 0)
-            pdf.set_font('Arial', '', 10)
-            pdf.cell(0, 7, value, 0, 1)
-        
-        # TOTAL HIGHLIGHT
-        pdf.set_fill_color(230, 240, 250)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(40, 10, 'TOTAL DUE:', 0, 0, 'L', True)
-        pdf.cell(0, 10, f"{cur} {total:,.2f}", 0, 1, 'L', True)
-        
-        pdf.ln(6)
-        
-        # LINE ITEMS TABLE
-        items = data.get('line_items', [])
+        items = data.get('line_items',[])
         if items:
-            pdf.set_fill_color(52, 73, 94)
-            pdf.set_text_color(255, 255, 255)
-            pdf.set_font('Arial', 'B', 12)
-            pdf.cell(0, 9, f'  LINE ITEMS ({len(items)})', 0, 1, 'L', True)
-            pdf.set_text_color(0, 0, 0)
-            pdf.ln(4)
-            
-            # Table header
-            pdf.set_fill_color(189, 195, 199)
-            pdf.set_font('Arial', 'B', 8)
-            pdf.cell(75, 7, '  Description', 1, 0, 'L', True)
-            pdf.cell(20, 7, 'Qty', 1, 0, 'C', True)
-            pdf.cell(30, 7, 'Unit Price', 1, 0, 'R', True)
-            pdf.cell(30, 7, 'Line Total', 1, 1, 'R', True)
-            
-            # Table rows
-            pdf.set_font('Arial', '', 8)
+            pdf.set_fill_color(52,73,94); pdf.set_text_color(255,255,255)
+            pdf.set_font('Arial','B',12); pdf.cell(0,9,f'  LINE ITEMS ({len(items)})',0,1,'L',True)
+            pdf.set_text_color(0,0,0); pdf.ln(4)
+            pdf.set_fill_color(189,195,199); pdf.set_font('Arial','B',8)
+            pdf.cell(75,7,'  Description',1,0,'L',True); pdf.cell(20,7,'Qty',1,0,'C',True)
+            pdf.cell(30,7,'Unit Price',1,0,'R',True); pdf.cell(30,7,'Line Total',1,1,'R',True)
+            pdf.set_font('Arial','',8)
             for item in items[:40]:
-                desc = clean(item.get('description', 'N/A'))[:40]
-                qty = item.get('quantity', 0) or 0
-                unit = item.get('unit_price', 0) or 0
-                line_total = item.get('line_total', 0) or 0
-                
-                pdf.cell(75, 6, f'  {desc}', 1, 0, 'L')
-                pdf.cell(20, 6, str(qty), 1, 0, 'C')
-                pdf.cell(30, 6, f"{cur} {unit:,.2f}", 1, 0, 'R')
-                pdf.cell(30, 6, f"{cur} {line_total:,.2f}", 1, 1, 'R')
+                desc = clean(safe_str(item.get('description'),'N/A'))[:40]
+                qty = safe_float(item.get('quantity'))
+                unit = safe_float(item.get('unit_price'))
+                lt = safe_float(item.get('line_total'))
+                pdf.cell(75,6,f'  {desc}',1,0,'L')
+                pdf.cell(20,6,str(int(qty)) if qty == int(qty) else str(qty),1,0,'C')
+                pdf.cell(30,6,f"{cur} {unit:,.2f}",1,0,'R')
+                pdf.cell(30,6,f"{cur} {lt:,.2f}",1,1,'R')
         
-        # FOOTER
-        pdf.ln(15)
-        pdf.set_font('Arial', 'I', 7)
-        pdf.set_text_color(127, 140, 141)
-        pdf.cell(0, 5, 'Churchgate-AI Enterprise Invoice Processing System', 0, 1, 'C')
-        pdf.cell(0, 5, 'Powered by Google Gemini AI | Enterprise-Grade Validation Engine', 0, 1, 'C')
-        pdf.cell(0, 5, f'Report generated: {datetime.now().strftime("%B %d, %Y at %I:%M %p")}', 0, 1, 'C')
-        pdf.cell(0, 5, 'This is an AI-assisted extraction. Please verify against the original document.', 0, 1, 'C')
-        
+        pdf.ln(15); pdf.set_font('Arial','I',7); pdf.set_text_color(127,140,141)
+        pdf.cell(0,5,'Churchgate-AI Enterprise Invoice Processing System',0,1,'C')
+        pdf.cell(0,5,'Powered by Google Gemini AI | Enterprise-Grade Validation Engine',0,1,'C')
+        pdf.cell(0,5,f'Report generated: {datetime.now().strftime("%B %d, %Y at %I:%M %p")}',0,1,'C')
         return pdf.output(dest='S').encode('latin-1')
-    except Exception as e:
+    except:
         return None
 
 # ============================================
@@ -411,7 +257,6 @@ with st.sidebar:
     else: st.error("🔑 API Key Missing")
     
     st.markdown("---")
-    st.markdown("### 📊 Live Statistics")
     if 'count' not in st.session_state: st.session_state.count = 0
     if 'total_val' not in st.session_state: st.session_state.total_val = 0
     if 'history' not in st.session_state: st.session_state.history = []
@@ -423,10 +268,10 @@ with st.sidebar:
     st.markdown("### ⚡ Quick Actions")
     if st.button("📂 Open Output Folder", use_container_width=True):
         try: os.startfile(os.path.abspath("output"))
-        except: st.info("Available on local machine only")
+        except: st.info("Local only")
     if st.button("📁 Open Input Folder", use_container_width=True):
         try: os.startfile(os.path.abspath("input"))
-        except: st.info("Available on local machine only")
+        except: st.info("Local only")
     if st.button("🗑️ Clear Session", use_container_width=True):
         st.session_state.count = 0; st.session_state.total_val = 0
         st.session_state.history = []; st.session_state.results = []
@@ -436,16 +281,16 @@ with st.sidebar:
     st.caption(f"© {datetime.now().year} Churchgate Group")
 
 # ============================================
-# BRS-STYLE HEADER
+# HEADER
 # ============================================
 if LOGO_B64:
-    logo_element = f'<img src="data:image/png;base64,{LOGO_B64}" class="brs-logo">'
+    logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" class="brs-logo">'
 else:
-    logo_element = '<div class="brs-logo-placeholder">🏢</div>'
+    logo_html = '<div class="brs-logo-placeholder">🏢</div>'
 
 st.markdown(f"""
 <div class="brs-header">
-    {logo_element}
+    {logo_html}
     <div>
         <h1 class="brs-title">Churchgate Invoice Processing <span class="brs-badge">ENTERPRISE</span></h1>
         <p class="brs-subtitle">AI Extraction • Auto-Validation • ERP Matching • PDF & Excel Export</p>
@@ -515,8 +360,8 @@ with tab1:
                 if "error" in res: results.append({"file": file.name, "error": res["error"]})
                 else:
                     res = validator.validate(res); res['_file'] = file.name; results.append(res)
-                    st.session_state.count += 1; st.session_state.total_val += res.get('total_amount', 0) or 0
-                    st.session_state.history.append({'status': res.get('_validation',{}).get('status','?'), 'currency': res.get('currency','NGN'), 'total': res.get('total_amount',0) or 0, 'vendor': res.get('vendor_name','N/A')})
+                    st.session_state.count += 1; st.session_state.total_val += safe_float(res.get('total_amount'))
+                    st.session_state.history.append({'status': res.get('_validation',{}).get('status','?'), 'currency': safe_str(res.get('currency'),'NGN'), 'total': safe_float(res.get('total_amount')), 'vendor': safe_str(res.get('vendor_name'),'N/A')})
                 prog.progress((i+1)/len(uploaded))
             elapsed = time.time() - start_time
             stat.success(f"✅ {len(uploaded)} invoice(s) processed in {elapsed:.1f}s")
@@ -528,68 +373,70 @@ with tab1:
         st.markdown("### 📋 Results")
         for i, res in enumerate(st.session_state.results):
             if "error" in res: st.error(f"❌ {res['file']}: {res['error']}"); continue
-            v = res.get('_validation', {}); sts = v.get('status', '?')
+            v = res.get('_validation', {}); sts = str(v.get('status', '?'))
             badge = {'PASS':'<span class="status-pass">✅ PASSED</span>','WARN':'<span class="status-warn">⚠️ WARNINGS</span>'}.get(sts, '<span class="status-fail">❌ REVIEW</span>')
-            with st.expander(f"{'✅' if sts=='PASS' else '⚠️'} {res.get('_file','')} — {res.get('vendor_name','N/A')[:30]} | {res.get('currency','')} {res.get('total_amount',0):,.2f}", expanded=(i==0)):
+            
+            # SAFE DISPLAY - handles None values
+            vendor_disp = safe_str(res.get('vendor_name'), 'Unknown Vendor', 30)
+            file_disp = safe_str(res.get('_file'), 'Invoice')
+            cur_disp = safe_str(res.get('currency'), 'NGN')
+            total_disp = safe_float(res.get('total_amount'))
+            
+            with st.expander(f"{'✅' if sts=='PASS' else '⚠️'} {file_disp} — {vendor_disp} | {cur_disp} {total_disp:,.2f}", expanded=(i==0)):
                 c1,c2 = st.columns([2,1])
                 with c1:
-                    st.markdown(f"**🏢 Vendor:** {res.get('vendor_name','N/A')}")
-                    st.markdown(f"**📄 Invoice #:** {res.get('invoice_number','N/A')}")
-                    st.markdown(f"**📅 Date:** {res.get('invoice_date','N/A')} | **Due:** {res.get('due_date','N/A') or 'N/A'}")
-                    if res.get('po_number'): st.markdown(f"**🔢 PO #:** {res.get('po_number')}")
+                    st.markdown(f"**🏢 Vendor:** {safe_str(res.get('vendor_name'))}")
+                    st.markdown(f"**📄 Invoice #:** {safe_str(res.get('invoice_number'))}")
+                    st.markdown(f"**📅 Date:** {safe_str(res.get('invoice_date'))} | **Due:** {safe_str(res.get('due_date'),'N/A')}")
+                    if res.get('po_number'): st.markdown(f"**🔢 PO #:** {safe_str(res.get('po_number'))}")
                     st.markdown("---")
                     csub,ctax,ctot = st.columns(3)
-                    csub.metric("Subtotal", f"{res.get('currency','')} {res.get('subtotal',0):,.2f}")
-                    ctax.metric("Tax", f"{res.get('currency','')} {res.get('tax_amount',0):,.2f}")
-                    ctot.metric("**TOTAL**", f"{res.get('currency','')} {res.get('total_amount',0):,.2f}")
+                    csub.metric("Subtotal", f"{cur_disp} {safe_float(res.get('subtotal')):,.2f}")
+                    ctax.metric("Tax", f"{cur_disp} {safe_float(res.get('tax_amount')):,.2f}")
+                    ctot.metric("**TOTAL**", f"{cur_disp} {total_disp:,.2f}")
                 with c2:
                     st.markdown(badge, unsafe_allow_html=True)
-                    st.progress(v.get('confidence_score',0)/100, text=f"Confidence: {v.get('confidence_score',0)}%")
-                    for e in v.get('errors',[]): st.error(e)
-                    for w in v.get('warnings',[]): st.warning(w)
+                    conf_score = v.get('confidence_score', 0) or 0
+                    st.progress(conf_score/100, text=f"Confidence: {conf_score}%")
+                    for e in v.get('errors',[]): st.error(safe_str(e))
+                    for w in v.get('warnings',[]): st.warning(safe_str(w))
                     if not v.get('errors') and not v.get('warnings'): st.success("All checks passed")
-                items = res.get('line_items',[])
+                
+                items = res.get('line_items',[]) or []
                 if items:
                     st.markdown("---")
                     st.markdown(f"**📦 Line Items ({len(items)}):**")
                     st.dataframe(pd.DataFrame(items), use_container_width=True, hide_index=True)
+                
                 st.markdown("---")
                 ex1,ex2 = st.columns(2)
                 with ex1:
-                    # Excel export via openpyxl
                     try:
-                        from io import BytesIO as Bio
                         output = Bio()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
                             pd.DataFrame([{
-                                'Vendor Name': res.get('vendor_name',''),
-                                'Invoice Number': res.get('invoice_number',''),
-                                'Invoice Date': res.get('invoice_date',''),
-                                'Due Date': res.get('due_date',''),
-                                'PO Number': res.get('po_number',''),
-                                'Subtotal': res.get('subtotal',0),
-                                'Tax Amount': res.get('tax_amount',0),
-                                'Total Amount': res.get('total_amount',0),
-                                'Currency': res.get('currency',''),
-                                'Validation Status': v.get('status',''),
-                                'Confidence Score': v.get('confidence_score',0)
+                                'Vendor': safe_str(res.get('vendor_name')),
+                                'Invoice': safe_str(res.get('invoice_number')),
+                                'Date': safe_str(res.get('invoice_date')),
+                                'Total': total_disp,
+                                'Status': sts
                             }]).to_excel(writer, sheet_name='Summary', index=False)
                             if items: pd.DataFrame(items).to_excel(writer, sheet_name='Line Items', index=False)
-                        st.download_button("📊 Download Excel", output.getvalue(), f"{res.get('invoice_number','invoice')}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, key=f"excel_{i}")
+                        st.download_button("📊 Download Excel", output.getvalue(), f"{safe_str(res.get('invoice_number'),'invoice')}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True, key=f"excel_{i}")
                     except:
-                        csv_d = pd.DataFrame([{'Vendor':res.get('vendor_name',''),'Invoice':res.get('invoice_number',''),'Total':res.get('total_amount',0),'Status':v.get('status','')}]).to_csv(index=False)
-                        st.download_button("📊 Download CSV", csv_d, f"{res.get('invoice_number','invoice')}.csv", "text/csv", use_container_width=True, key=f"csv_{i}")
+                        csv_d = pd.DataFrame([{'Vendor':safe_str(res.get('vendor_name')),'Invoice':safe_str(res.get('invoice_number')),'Total':total_disp}]).to_csv(index=False)
+                        st.download_button("📊 Download CSV", csv_d, f"{safe_str(res.get('invoice_number'),'invoice')}.csv", "text/csv", use_container_width=True, key=f"csv_{i}")
                 with ex2:
                     pdf_b = generate_pdf_report(res)
                     if pdf_b:
-                        st.download_button("📕 Download PDF Report", pdf_b, f"{res.get('invoice_number','invoice')}.pdf", "application/pdf", use_container_width=True, key=f"pdf_{i}")
+                        st.download_button("📕 Download PDF Report", pdf_b, f"{safe_str(res.get('invoice_number'),'invoice')}.pdf", "application/pdf", use_container_width=True, key=f"pdf_{i}")
 
 # ============================================
 # TAB 2: ERP MATCHING
 # ============================================
 with tab2:
     st.markdown("### 🔗 ERP Matching Engine")
-    st.markdown("Match extracted invoices against Purchase Orders, Work Orders, and Payment Abstracts — **PDF, Excel, or scanned documents**")
+    st.markdown("Match extracted invoices against Purchase Orders, Work Orders, and Payment Abstracts")
     
     erp_col1, erp_col2, erp_col3 = st.columns(3)
     with erp_col1:
@@ -599,9 +446,7 @@ with tab2:
     with erp_col3:
         vendor_files = st.file_uploader("📄 Vendor Master List", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True, key="vendor_upload")
     
-    erp_ready = (po_files or vendor_files)
-    
-    if erp_ready and API_KEY:
+    if (po_files or vendor_files) and API_KEY:
         if st.button("📥 Load & Extract ERP Data", type="primary", use_container_width=True):
             with st.spinner("AI extracting data from ERP documents..."):
                 try:
@@ -634,20 +479,23 @@ with tab2:
                                 if 'error' not in extracted:
                                     extracted['_source_file'] = vendor_file.name; st.session_state.erp_vendor_data.append(extracted); docs_processed += 1
                     st.success(f"✅ Extracted data from {docs_processed} ERP document(s)")
+                    
                     if st.session_state.get('erp_vendor_data'):
-                        vendor_names = [vd['vendor_name'] for vd in st.session_state.erp_vendor_data if vd.get('vendor_name')]
+                        vendor_names = [safe_str(vd.get('vendor_name')) for vd in st.session_state.erp_vendor_data if vd.get('vendor_name')]
                         if vendor_names:
                             vendor_df = pd.DataFrame({'vendor_name': vendor_names})
                             vendor_path = f"/tmp/vendor_master_{datetime.now().timestamp()}.xlsx"
                             vendor_df.to_excel(vendor_path, index=False)
                             st.session_state.matcher.load_erp_data(vendor_file=vendor_path)
+                    
                     if st.session_state.get('erp_po_data'):
-                        po_rows = [{'po_number': pd_data.get('po_number') or pd_data.get('invoice_number','N/A'), 'vendor_name': pd_data.get('vendor_name',''), 'amount': pd_data.get('total_amount',0)} for pd_data in st.session_state.erp_po_data]
+                        po_rows = [{'po_number': safe_str(pd_data.get('po_number') or pd_data.get('invoice_number')), 'vendor_name': safe_str(pd_data.get('vendor_name')), 'amount': safe_float(pd_data.get('total_amount'))} for pd_data in st.session_state.erp_po_data]
                         if po_rows:
                             po_df = pd.DataFrame(po_rows)
                             po_path = f"/tmp/po_master_{datetime.now().timestamp()}.xlsx"
                             po_df.to_excel(po_path, index=False)
                             st.session_state.matcher.load_erp_data(po_file=po_path)
+                    
                     st.session_state.erp_loaded = True
                 except Exception as e: st.error(f"Error: {e}")
     
@@ -668,22 +516,33 @@ with tab2:
                     st.session_state.match_results = match_results
                     summary = st.session_state.matcher.get_summary()
                     st.dataframe(summary, use_container_width=True, hide_index=True)
+                    
                     for i, r in enumerate(match_results):
-                        status_color = {'APPROVED_FOR_PAYMENT':'status-pass','APPROVED_WITH_NOTES':'status-warn','REVIEW_REQUIRED':'status-fail'}.get(r['status'],'status-fail')
-                        with st.expander(f"{'✅' if 'APPROVED' in r['status'] else '❌'} {r.get('vendor_name','')[:30]} — {r.get('invoice_number','')} | {r['status']}", expanded=(i==0)):
+                        status_color = {'APPROVED_FOR_PAYMENT':'status-pass','APPROVED_WITH_NOTES':'status-warn','REVIEW_REQUIRED':'status-fail'}.get(str(r.get('status','')), 'status-fail')
+                        vendor_disp = safe_str(r.get('vendor_name'), 'Unknown', 30)
+                        inv_disp = safe_str(r.get('invoice_number'), 'N/A')
+                        status_disp = safe_str(r.get('status'), 'PENDING')
+                        approved = 'APPROVED' in str(r.get('status',''))
+                        
+                        with st.expander(f"{'✅' if approved else '❌'} {vendor_disp} — {inv_disp} | {status_disp}", expanded=(i==0)):
                             cA,cB = st.columns(2)
                             with cA:
-                                st.markdown(f"**Invoice #:** {r.get('invoice_number','N/A')}")
-                                st.markdown(f"**Vendor:** {r.get('vendor_name','N/A')}")
-                                st.markdown(f"**Total:** {r.get('invoice_total',0):,.2f}")
+                                st.markdown(f"**Invoice #:** {inv_disp}")
+                                st.markdown(f"**Vendor:** {vendor_disp}")
+                                st.markdown(f"**Total:** {safe_float(r.get('invoice_total')):,.2f}")
                             with cB:
-                                st.markdown(f'<span class="{status_color}">{r["status"]}</span>', unsafe_allow_html=True)
+                                st.markdown(f'<span class="{status_color}">{status_disp}</span>', unsafe_allow_html=True)
                                 st.metric("Confidence", f"{r.get('confidence',0)}%")
-                            if r.get('flags'):
-                                for flag in r['flags']:
-                                    sev = {'HIGH':'🔴','MEDIUM':'🟡','LOW':'🟢'}.get(flag['severity'],'⚪')
-                                    st.markdown(f"{sev} **[{flag['severity']}]** {flag['message']}")
+                            
+                            flags = r.get('flags',[]) or []
+                            if flags:
+                                for flag in flags:
+                                    sev = str(flag.get('severity','')).upper()
+                                    sev_icon = {'HIGH':'🔴','MEDIUM':'🟡','LOW':'🟢'}.get(sev,'⚪')
+                                    st.markdown(f"{sev_icon} **[{sev}]** {safe_str(flag.get('message'))}")
+                    
                     try:
                         report_path = st.session_state.matcher.export_report()
-                        with open(report_path,'rb') as f: st.download_button("📊 Download Matching Report", f.read(), Path(report_path).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                        with open(report_path,'rb') as f:
+                            st.download_button("📊 Download Matching Report", f.read(), Path(report_path).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
                     except: pass
