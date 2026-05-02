@@ -1,6 +1,5 @@
 """
 Churchgate-AI Enterprise Invoice Processing Dashboard
-Includes ERP Matching Engine (PO/WO/Abstract) - All Formats
 """
 import streamlit as st
 import os, json, base64, requests, pandas as pd, time, re, numpy as np
@@ -55,7 +54,7 @@ st.set_page_config(
 )
 
 # ============================================
-# CUSTOM CSS
+# CUSTOM CSS - BRS STYLE MATCH
 # ============================================
 st.markdown("""
 <style>
@@ -63,64 +62,151 @@ st.markdown("""
     * { font-family: 'Inter', sans-serif; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    .header-banner {
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
-        border-radius: 24px; padding: 2rem 3rem; margin-bottom: 2rem;
-        display: flex; align-items: center; justify-content: center; gap: 32px;
-        border: 1px solid #cbd5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    /* BRS-STYLE GREY HEADER BANNER */
+    .brs-header {
+        background: linear-gradient(135deg, #e8ecf1 0%, #d5dbe3 50%, #e8ecf1 100%);
+        border-radius: 0;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        border-bottom: 2px solid #c0c7cf;
     }
-    .header-title {
-        font-size: 2.4rem; font-weight: 800;
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e40af 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        letter-spacing: -1px; margin: 0; line-height: 1.2;
+    .brs-logo {
+        width: 120px;
+        height: 120px;
+        border-radius: 16px;
+        object-fit: contain;
+        background: white;
+        padding: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        flex-shrink: 0;
     }
-    .header-subtitle { font-size: 1rem; color: #475569; font-weight: 500; margin: 6px 0 0 0; }
-    .header-badge {
-        display: inline-block; background: linear-gradient(135deg, #059669, #10b981);
-        color: white; padding: 0.2rem 0.8rem; border-radius: 12px;
-        font-size: 0.7rem; font-weight: 700; margin-left: 8px; vertical-align: middle;
+    .brs-logo-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 16px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        flex-shrink: 0;
     }
+    .brs-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #1a1a2e;
+        letter-spacing: -0.5px;
+        margin: 0;
+        line-height: 1.2;
+    }
+    .brs-subtitle {
+        font-size: 0.95rem;
+        color: #4a5568;
+        font-weight: 500;
+        margin: 6px 0 0 0;
+    }
+    .brs-badge {
+        display: inline-block;
+        background: #2563eb;
+        color: white;
+        padding: 0.25rem 0.9rem;
+        border-radius: 14px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: 8px;
+        vertical-align: middle;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Metrics */
     .metric-box {
-        background: white; border: 1px solid #e2e8f0; border-radius: 20px;
-        padding: 1.5rem 1.2rem; text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04); transition: all 0.25s;
-        position: relative; overflow: hidden;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.5rem 1.2rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        transition: all 0.25s;
+        position: relative;
+        overflow: hidden;
     }
     .metric-box::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
         background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa);
     }
     .metric-box:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-    .metric-icon { font-size: 2.2rem; margin-bottom: 0.4rem; }
-    .metric-value { font-size: 2rem; font-weight: 800; color: #0f172a; }
-    .metric-label { font-size: 0.85rem; color: #64748b; font-weight: 500; margin-top: 0.2rem; }
+    .metric-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+    .metric-value { font-size: 1.8rem; font-weight: 800; color: #1a1a2e; }
+    .metric-label { font-size: 0.82rem; color: #64748b; font-weight: 500; margin-top: 0.2rem; }
     
+    /* Status badges */
     .status-pass { background: #059669; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     .status-warn { background: #d97706; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     .status-fail { background: #dc2626; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
-    .status-approved { background: #7c3aed; color: white; padding: 0.4rem 1.4rem; border-radius: 24px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
     
     div[data-testid="stFileUploader"] {
-        border: 2px dashed #3b82f6; border-radius: 20px; padding: 2rem;
+        border: 2px dashed #3b82f6;
+        border-radius: 16px;
+        padding: 2rem;
         background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #dbeafe 100%);
     }
     .stButton > button {
-        border-radius: 14px; font-weight: 700; padding: 0.85rem 2.5rem; font-size: 1.05rem;
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e40af 100%);
-        color: white; border: none; transition: all 0.3s; width: 100%;
+        border-radius: 12px;
+        font-weight: 700;
+        padding: 0.8rem 2.5rem;
+        font-size: 1rem;
+        background: linear-gradient(135deg, #1a1a2e 0%, #1e3a5f 50%, #2563eb 100%);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+        width: 100%;
     }
-    .stButton > button:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(30,64,175,0.4); }
+    .stButton > button:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,99,235,0.4); }
     
+    /* Sidebar */
     .sidebar-header {
-        text-align: center; padding: 1.5rem 0.5rem; border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 1.2rem; background: linear-gradient(180deg, #f8fafc 0%, transparent 100%);
+        text-align: center;
+        padding: 1.5rem 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1.2rem;
+        background: #f8fafc;
         border-radius: 16px;
     }
-    .sidebar-company { font-weight: 800; font-size: 1.2rem; color: #0f172a; margin-top: 0.6rem; }
-    .sidebar-subtitle { font-size: 0.78rem; color: #64748b; font-weight: 500; }
-    .section-divider { height: 1px; background: linear-gradient(90deg, transparent, #cbd5e1, transparent); margin: 2.5rem 0; }
-    .chart-card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .sidebar-logo-small {
+        width: 85px;
+        height: 85px;
+        border-radius: 14px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 0.6rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        background: white;
+        padding: 8px;
+    }
+    .sidebar-company { font-weight: 800; font-size: 1.1rem; color: #1a1a2e; margin-top: 0.5rem; }
+    .sidebar-subtitle { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+    
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+        margin: 2rem 0;
+    }
+    .chart-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -221,11 +307,11 @@ def generate_pdf_report(data):
 with st.sidebar:
     st.markdown('<div class="sidebar-header">', unsafe_allow_html=True)
     if LOGO_B64:
-        st.markdown(f'<img src="data:image/png;base64,{LOGO_B64}" style="width:90px;height:90px;border-radius:18px;object-fit:contain;display:block;margin:0 auto 0.8rem;box-shadow:0 4px 12px rgba(0,0,0,0.1);">', unsafe_allow_html=True)
+        st.markdown(f'<img src="data:image/png;base64,{LOGO_B64}" class="sidebar-logo-small">', unsafe_allow_html=True)
     else:
-        st.markdown('<div style="font-size:3.5rem;text-align:center;">🏢</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:3rem;text-align:center;">🏢</div>', unsafe_allow_html=True)
     st.markdown('<p class="sidebar-company">Churchgate Group</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sidebar-subtitle">Invoice Processing + ERP Matching</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sidebar-subtitle">Invoice Processing System</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
     if API_KEY: st.success("🔑 API Key Active")
@@ -242,27 +328,25 @@ with st.sidebar:
     if st.button("🗑️ Clear Session", use_container_width=True):
         st.session_state.count = 0; st.session_state.total_val = 0
         st.session_state.history = []; st.session_state.results = []
-        st.session_state.erp_loaded = False
-        st.session_state.erp_po_data = []; st.session_state.erp_vendor_data = []
         st.rerun()
     st.markdown("---")
     st.caption("v4.0 Enterprise | Gemini AI")
     st.caption(f"© {datetime.now().year} Churchgate Group")
 
 # ============================================
-# HEADER
+# BRS-STYLE HEADER
 # ============================================
 if LOGO_B64:
-    logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" style="width:100px;height:100px;border-radius:18px;object-fit:contain;background:white;padding:10px;box-shadow:0 4px 14px rgba(0,0,0,0.1);flex-shrink:0;">'
+    logo_element = f'<img src="data:image/png;base64,{LOGO_B64}" class="brs-logo">'
 else:
-    logo_html = '<div style="font-size:3.5rem;width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:white;border-radius:18px;flex-shrink:0;">🏢</div>'
+    logo_element = '<div class="brs-logo-placeholder">🏢</div>'
 
 st.markdown(f"""
-<div class="header-banner">
-    {logo_html}
+<div class="brs-header">
+    {logo_element}
     <div>
-        <h1 class="header-title">Churchgate Invoice Processing <span class="header-badge">ENTERPRISE</span></h1>
-        <p class="header-subtitle">AI Extraction • Auto-Validation • ERP Matching • PDF & Excel Export</p>
+        <h1 class="brs-title">Churchgate Invoice Processing <span class="brs-badge">ENTERPRISE</span></h1>
+        <p class="brs-subtitle">AI Extraction • Auto-Validation • ERP Matching • PDF & Excel Export</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -277,10 +361,10 @@ tab1, tab2 = st.tabs(["📄 Invoice Processing", "🔗 ERP Matching (PO/WO/Abstr
 # ============================================
 with tab1:
     m1,m2,m3,m4 = st.columns(4)
-    with m1: st.markdown(f'<div class="metric-box"><div class="metric-icon">📄</div><div class="metric-value">{st.session_state.count}</div><div class="metric-label">Processed</div></div>', unsafe_allow_html=True)
+    with m1: st.markdown(f'<div class="metric-box"><div class="metric-icon">📄</div><div class="metric-value">{st.session_state.count}</div><div class="metric-label">Invoices Processed</div></div>', unsafe_allow_html=True)
     with m2: st.markdown(f'<div class="metric-box"><div class="metric-icon">💰</div><div class="metric-value">{"₦"+f"{st.session_state.total_val:,.0f}" if st.session_state.total_val > 0 else "—"}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
-    with m3: st.markdown('<div class="metric-box"><div class="metric-icon">⚡</div><div class="metric-value">3-8s</div><div class="metric-label">Per Invoice</div></div>', unsafe_allow_html=True)
-    with m4: st.markdown('<div class="metric-box"><div class="metric-icon">🎯</div><div class="metric-value">95%+</div><div class="metric-label">Accuracy</div></div>', unsafe_allow_html=True)
+    with m3: st.markdown('<div class="metric-box"><div class="metric-icon">⚡</div><div class="metric-value">3-8s</div><div class="metric-label">Processing Speed</div></div>', unsafe_allow_html=True)
+    with m4: st.markdown('<div class="metric-box"><div class="metric-icon">🎯</div><div class="metric-value">95%+</div><div class="metric-label">Extraction Accuracy</div></div>', unsafe_allow_html=True)
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
@@ -300,7 +384,7 @@ with tab1:
             if len(st.session_state.history) > 1:
                 vendors = [h.get('vendor','N/A')[:20] for h in st.session_state.history]
                 totals = [h.get('total',0) for h in st.session_state.history]
-                fig = go.Figure(data=[go.Bar(x=vendors, y=totals, marker=dict(color=totals, colorscale=[[0,'#3b82f6'],[1,'#1e3a5f']]), text=[f"₦{t:,.0f}" for t in totals], textposition='outside')])
+                fig = go.Figure(data=[go.Bar(x=vendors, y=totals, marker=dict(color=totals, colorscale=[[0,'#3b82f6'],[1,'#1a1a2e']]), text=[f"₦{t:,.0f}" for t in totals], textposition='outside')])
                 fig.update_layout(title='Invoice Values', height=300, margin=dict(t=40,b=20,l=20,r=20), showlegend=False, yaxis=dict(showticklabels=False))
                 st.plotly_chart(fig, use_container_width=True)
         st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
@@ -369,42 +453,19 @@ with tab1:
                     if pdf_b: st.download_button("📕 PDF", pdf_b, f"{res.get('invoice_number','invoice')}.pdf", "application/pdf", use_container_width=True, key=f"pdf_{i}")
 
 # ============================================
-# TAB 2: ERP MATCHING (ALL FORMATS)
+# TAB 2: ERP MATCHING
 # ============================================
 with tab2:
     st.markdown("### 🔗 ERP Matching Engine")
     st.markdown("Match extracted invoices against Purchase Orders, Work Orders, and Payment Abstracts — **PDF, Excel, or scanned documents**")
     
-    st.markdown("#### 📂 Load ERP Reference Data")
-    
     erp_col1, erp_col2, erp_col3 = st.columns(3)
-    
     with erp_col1:
-        po_files = st.file_uploader(
-            "📄 Purchase Orders / Abstracts",
-            type=['pdf', 'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'xlsx', 'xls'],
-            accept_multiple_files=True,
-            key="po_upload",
-            help="Upload PO documents: PDF, Excel, or scanned images"
-        )
-    
+        po_files = st.file_uploader("📄 Purchase Orders / Abstracts", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True, key="po_upload")
     with erp_col2:
-        wo_files = st.file_uploader(
-            "📄 Work Orders / Contracts",
-            type=['pdf', 'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'xlsx', 'xls'],
-            accept_multiple_files=True,
-            key="wo_upload",
-            help="Upload WO documents: PDF, Excel, or scanned images"
-        )
-    
+        wo_files = st.file_uploader("📄 Work Orders / Contracts", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True, key="wo_upload")
     with erp_col3:
-        vendor_files = st.file_uploader(
-            "📄 Vendor Master List",
-            type=['pdf', 'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'xlsx', 'xls'],
-            accept_multiple_files=True,
-            key="vendor_upload",
-            help="Upload approved vendor list: PDF, Excel, or scanned images"
-        )
+        vendor_files = st.file_uploader("📄 Vendor Master List", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True, key="vendor_upload")
     
     erp_ready = (po_files or vendor_files)
     
@@ -416,160 +477,81 @@ with tab2:
                     st.session_state.matcher = ERPMatcher()
                     extractor = Extractor(API_KEY)
                     docs_processed = 0
-                    
-                    # Process PO files
                     if po_files:
-                        st.info(f"Processing {len(po_files)} PO/Abstract document(s)...")
                         st.session_state.erp_po_data = []
                         for po_file in po_files:
-                            fb = po_file.read()
-                            suf = Path(po_file.name).suffix.lower()
+                            fb = po_file.read(); suf = Path(po_file.name).suffix.lower()
                             img = None
                             if suf == '.pdf': img = pdf_to_bytes(fb)
-                            elif suf in ['.xlsx', '.xls']: img = excel_to_bytes(fb)
+                            elif suf in ['.xlsx','.xls']: img = excel_to_bytes(fb)
                             else: img = fb
                             if img:
                                 extracted = extractor.extract(img)
                                 if 'error' not in extracted:
-                                    extracted['_source_file'] = po_file.name
-                                    extracted['_doc_type'] = 'PO'
-                                    st.session_state.erp_po_data.append(extracted)
-                                    docs_processed += 1
-                    
-                    # Process Vendor files
+                                    extracted['_source_file'] = po_file.name; st.session_state.erp_po_data.append(extracted); docs_processed += 1
                     if vendor_files:
-                        st.info(f"Processing {len(vendor_files)} vendor document(s)...")
                         st.session_state.erp_vendor_data = []
                         for vendor_file in vendor_files:
-                            fb = vendor_file.read()
-                            suf = Path(vendor_file.name).suffix.lower()
+                            fb = vendor_file.read(); suf = Path(vendor_file.name).suffix.lower()
                             img = None
                             if suf == '.pdf': img = pdf_to_bytes(fb)
-                            elif suf in ['.xlsx', '.xls']: img = excel_to_bytes(fb)
+                            elif suf in ['.xlsx','.xls']: img = excel_to_bytes(fb)
                             else: img = fb
                             if img:
                                 extracted = extractor.extract(img)
                                 if 'error' not in extracted:
-                                    extracted['_source_file'] = vendor_file.name
-                                    extracted['_doc_type'] = 'VENDOR'
-                                    st.session_state.erp_vendor_data.append(extracted)
-                                    docs_processed += 1
-                    
+                                    extracted['_source_file'] = vendor_file.name; st.session_state.erp_vendor_data.append(extracted); docs_processed += 1
                     st.success(f"✅ Extracted data from {docs_processed} ERP document(s)")
-                    
-                    # Build vendor master from extracted data
                     if st.session_state.get('erp_vendor_data'):
-                        vendor_names = []
-                        for vd in st.session_state.erp_vendor_data:
-                            if vd.get('vendor_name'):
-                                vendor_names.append(vd['vendor_name'])
+                        vendor_names = [vd['vendor_name'] for vd in st.session_state.erp_vendor_data if vd.get('vendor_name')]
                         if vendor_names:
                             vendor_df = pd.DataFrame({'vendor_name': vendor_names})
                             vendor_path = f"/tmp/vendor_master_{datetime.now().timestamp()}.xlsx"
                             vendor_df.to_excel(vendor_path, index=False)
                             st.session_state.matcher.load_erp_data(vendor_file=vendor_path)
-                    
-                    # Build PO database from extracted data
                     if st.session_state.get('erp_po_data'):
-                        po_rows = []
-                        for pd_data in st.session_state.erp_po_data:
-                            po_rows.append({
-                                'po_number': pd_data.get('po_number') or pd_data.get('invoice_number', 'N/A'),
-                                'vendor_name': pd_data.get('vendor_name', ''),
-                                'amount': pd_data.get('total_amount', 0),
-                                'description': pd_data.get('_source_file', ''),
-                            })
+                        po_rows = [{'po_number': pd_data.get('po_number') or pd_data.get('invoice_number','N/A'), 'vendor_name': pd_data.get('vendor_name',''), 'amount': pd_data.get('total_amount',0)} for pd_data in st.session_state.erp_po_data]
                         if po_rows:
                             po_df = pd.DataFrame(po_rows)
                             po_path = f"/tmp/po_master_{datetime.now().timestamp()}.xlsx"
                             po_df.to_excel(po_path, index=False)
                             st.session_state.matcher.load_erp_data(po_file=po_path)
-                    
                     st.session_state.erp_loaded = True
-                    
-                except Exception as e:
-                    st.error(f"Error: {e}")
+                except Exception as e: st.error(f"Error: {e}")
     
-    # Show ERP data summary
     if st.session_state.get('erp_loaded'):
-        st.markdown("---")
-        st.success("✅ ERP Data Loaded & Ready for Matching")
-        sc1, sc2, sc3 = st.columns(3)
-        sc1.metric("📄 PO/Abstract Docs", len(st.session_state.get('erp_po_data', [])))
-        sc2.metric("🏢 Vendor Records", len(st.session_state.get('erp_vendor_data', [])))
-        sc3.metric("🧾 Invoices Ready", len([r for r in st.session_state.get('results', []) if 'error' not in r]))
+        st.markdown("---"); st.success("✅ ERP Data Loaded & Ready")
+        sc1,sc2,sc3 = st.columns(3)
+        sc1.metric("📄 PO Docs", len(st.session_state.get('erp_po_data',[])))
+        sc2.metric("🏢 Vendors", len(st.session_state.get('erp_vendor_data',[])))
+        sc3.metric("🧾 Invoices", len([r for r in st.session_state.get('results',[]) if 'error' not in r]))
     
-    # Run Matching
     if st.session_state.get('matcher') and st.session_state.get('results'):
         invoices = [r for r in st.session_state.results if 'error' not in r]
-        
         if invoices:
             st.markdown("---")
-            st.markdown(f"#### 🔍 Match {len(invoices)} Invoice(s) Against ERP Records")
-            
             if st.button("🔍 Run ERP Matching", type="primary", use_container_width=True):
-                with st.spinner("Matching invoices against ERP records..."):
+                with st.spinner("Matching..."):
                     match_results = st.session_state.matcher.match_batch(invoices)
                     st.session_state.match_results = match_results
-                    
                     summary = st.session_state.matcher.get_summary()
-                    st.markdown("##### 📊 Matching Summary")
                     st.dataframe(summary, use_container_width=True, hide_index=True)
-                    
-                    st.markdown("---")
-                    st.markdown("##### 📋 Detailed Results")
-                    
                     for i, r in enumerate(match_results):
-                        status_color = {'APPROVED_FOR_PAYMENT': 'status-pass', 'APPROVED_WITH_NOTES': 'status-warn', 'REVIEW_REQUIRED': 'status-fail'}.get(r['status'], 'status-fail')
-                        status_icon = '✅' if 'APPROVED' in r['status'] else '❌'
-                        
-                        with st.expander(f"{status_icon} {r.get('vendor_name','')[:30]} — Invoice: {r.get('invoice_number','')} | {r['status']}", expanded=(i==0)):
-                            cA, cB = st.columns(2)
+                        status_color = {'APPROVED_FOR_PAYMENT':'status-pass','APPROVED_WITH_NOTES':'status-warn','REVIEW_REQUIRED':'status-fail'}.get(r['status'],'status-fail')
+                        with st.expander(f"{'✅' if 'APPROVED' in r['status'] else '❌'} {r.get('vendor_name','')[:30]} — {r.get('invoice_number','')} | {r['status']}", expanded=(i==0)):
+                            cA,cB = st.columns(2)
                             with cA:
                                 st.markdown(f"**Invoice #:** {r.get('invoice_number','N/A')}")
                                 st.markdown(f"**Vendor:** {r.get('vendor_name','N/A')}")
                                 st.markdown(f"**Total:** {r.get('invoice_total',0):,.2f}")
-                                if r.get('po_number'): st.markdown(f"**PO #:** {r['po_number']}")
                             with cB:
                                 st.markdown(f'<span class="{status_color}">{r["status"]}</span>', unsafe_allow_html=True)
                                 st.metric("Confidence", f"{r.get('confidence',0)}%")
-                            
                             if r.get('flags'):
-                                st.markdown("**🚩 Flags:**")
                                 for flag in r['flags']:
                                     sev = {'HIGH':'🔴','MEDIUM':'🟡','LOW':'🟢'}.get(flag['severity'],'⚪')
                                     st.markdown(f"{sev} **[{flag['severity']}]** {flag['message']}")
-                            
-                            if r.get('matches'):
-                                st.markdown("**✅ Matches:**")
-                                for m in r['matches']:
-                                    st.markdown(f"• **{m.get('type','')}**: {m.get('matched_to', m.get('po_number',''))} (Score: {m.get('score',0)}%)")
-                    
-                    st.markdown("---")
                     try:
                         report_path = st.session_state.matcher.export_report()
-                        with open(report_path, 'rb') as f:
-                            st.download_button("📊 Download Matching Report (Excel)", f.read(), Path(report_path).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
-                    except:
-                        st.warning("Report download available on local machine")
-        else:
-            st.info("📤 Process invoices in the 'Invoice Processing' tab first, then return here for ERP matching.")
-    elif not erp_ready:
-        st.info("""
-        ### 📤 How to Use ERP Matching
-        
-        1. **Upload ERP reference documents** above — PDF, Excel, or scanned images
-        2. **Click 'Load & Extract ERP Data'** — AI extracts PO/WO/Vendor info
-        3. **Process invoices** in the Invoice Processing tab
-        4. **Return here** and click **'Run ERP Matching'**
-        5. **Review matches, flags, and discrepancies**
-        6. **Download the matching report**
-        
-        ---
-        ### Supported ERP Formats
-        | Format | Examples |
-        |---|---|
-        | 📄 PDF | Purchase Orders, Abstracts |
-        | 📊 Excel | PO lists, Vendor masters |
-        | 🖼️ Scanned | Scanned documents, photos |
-        """)
+                        with open(report_path,'rb') as f: st.download_button("📊 Download Matching Report", f.read(), Path(report_path).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                    except: pass
