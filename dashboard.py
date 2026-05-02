@@ -54,7 +54,7 @@ st.set_page_config(
 )
 
 # ============================================
-# CUSTOM CSS - BRS STYLE MATCH
+# CUSTOM CSS
 # ============================================
 st.markdown("""
 <style>
@@ -74,25 +74,25 @@ st.markdown("""
         border-bottom: 2px solid #c0c7cf;
     }
     .brs-logo {
-        width: 120px;
-        height: 120px;
-        border-radius: 16px;
+        width: 130px;
+        height: 130px;
+        border-radius: 0;
         object-fit: contain;
-        background: white;
-        padding: 12px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
         flex-shrink: 0;
     }
     .brs-logo-placeholder {
-        width: 120px;
-        height: 120px;
-        border-radius: 16px;
-        background: white;
+        width: 130px;
+        height: 130px;
+        border-radius: 0;
+        background: transparent;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 4rem;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        font-size: 5rem;
+        box-shadow: none;
         flex-shrink: 0;
     }
     .brs-title {
@@ -182,15 +182,15 @@ st.markdown("""
         border-radius: 16px;
     }
     .sidebar-logo-small {
-        width: 85px;
-        height: 85px;
-        border-radius: 14px;
+        width: 110px;
+        height: 110px;
+        border-radius: 0;
         object-fit: contain;
         display: block;
         margin: 0 auto 0.6rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        background: white;
-        padding: 8px;
+        box-shadow: none;
+        background: transparent;
+        padding: 0;
     }
     .sidebar-company { font-weight: 800; font-size: 1.1rem; color: #1a1a2e; margin-top: 0.5rem; }
     .sidebar-subtitle { font-size: 0.75rem; color: #64748b; font-weight: 500; }
