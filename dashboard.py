@@ -10,6 +10,7 @@ from io import BytesIO
 from PIL import Image, ImageEnhance, ImageFilter
 import plotly.express as px
 import plotly.graph_objects as go
+from azure_extractor import DualAIEngine, AzureInvoiceExtractor
 
 # ============================================
 # LOAD API KEY
@@ -299,6 +300,13 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
     if API_KEY: st.success("🔑 API Key Active")
     else: st.error("🔑 API Key Missing")
+    
+    # Azure status
+    azure_check = AzureInvoiceExtractor()
+    if azure_check.is_configured:
+        st.success("☁️ Azure AI: Connected")
+    else:
+        st.warning("☁️ Azure AI: Not Configured")
     st.markdown("---")
     if 'count' not in st.session_state: st.session_state.count = 0
     if 'total_val' not in st.session_state: st.session_state.total_val = 0
@@ -384,6 +392,9 @@ with tab1:
     
     if uploaded and API_KEY:
         if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
+            azure_ext = AzureInvoiceExtractor()
+            gemini_ext = Extractor(API_KEY)
+            dual_engine = DualAIEngine(azure_ext, gemini_ext)
             extractor = Extractor(API_KEY)
             validator = Validator()
             results = []
