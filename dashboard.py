@@ -264,10 +264,20 @@ def generate_pdf_report(data):
             pdf.cell(75,7,'  Description',1,0,'L',True); pdf.cell(20,7,'Qty',1,0,'C',True); pdf.cell(30,7,'Unit Price',1,0,'R',True); pdf.cell(30,7,'Line Total',1,1,'R',True)
             pdf.set_font('Arial','',8)
             for item in items[:40]:
-                desc = clean(safe_str(item.get('description'),'N/A'))[:40]
-                qty = safe_float(item.get('quantity')); unit = safe_float(item.get('unit_price')); lt = safe_float(item.get('line_total'))
-                pdf.cell(75,6,f'  {desc}',1,0,'L'); pdf.cell(20,6,str(int(qty)) if qty==int(qty) else str(qty),1,0,'C')
-                pdf.cell(30,6,f"{cur} {unit:,.2f}",1,0,'R'); pdf.cell(30,6,f"{cur} {lt:,.2f}",1,1,'R')
+                # Try multiple field name variations
+                desc = clean(safe_str(item.get('description')) or safe_str(item.get('item')) or safe_str(item.get('name')) or 'N/A')[:40]
+                qty = safe_float(item.get('quantity') or item.get('qty') or item.get('qty_invoiced'))
+                unit = safe_float(item.get('unit_price') or item.get('rate') or item.get('price') or item.get('unit_cost') or item.get('unitprice'))
+                lt = safe_float(item.get('line_total') or item.get('total') or item.get('amount') or item.get('line_amount') or item.get('linetotal'))
+                
+                # Calculate missing values
+                if unit == 0 and lt > 0 and qty > 0: unit = round(lt / qty, 2)
+                if lt == 0 and qty > 0 and unit > 0: lt = round(qty * unit, 2)
+                
+                pdf.cell(75,6,f'  {desc}',1,0,'L')
+                pdf.cell(20,6,str(int(qty)) if qty==int(qty) else str(qty),1,0,'C')
+                pdf.cell(30,6,f"{cur} {unit:,.2f}",1,0,'R')
+                pdf.cell(30,6,f"{cur} {lt:,.2f}",1,1,'R')
         pdf.ln(15); pdf.set_font('Arial','I',7); pdf.set_text_color(127,140,141)
         pdf.cell(0,5,'Churchgate-AI Enterprise Invoice Processing System',0,1,'C')
         pdf.cell(0,5,'Powered by Google Gemini AI | Multi-Page PDF + Image Enhancement',0,1,'C')
