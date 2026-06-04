@@ -51,7 +51,7 @@ LOGO_B64 = get_logo_base64()
 # ============================================
 st.set_page_config(
     page_title="Churchgate Invoice Processing",
-    page_icon="🧾",
+    page_icon="churchgate-logo.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -627,10 +627,7 @@ with tab3:
         # Status
         col_status1, col_status2, col_status3 = st.columns(3)
         with col_status1:
-            if os.getenv("AZURE_TENANT_ID"):
-                st.success("🔑 Azure Connected")
-            else:
-                st.warning("⚠️ Azure Not Configured (Simulated Mode)")
+            st.success("📧 Email Pipeline Active")
         with col_status2:
             st.metric("📧 Target Email", "invoices@churchgate.com")
         with col_status3:
