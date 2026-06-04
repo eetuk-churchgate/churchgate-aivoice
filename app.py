@@ -687,11 +687,35 @@ def main():
         print(f"  {Bo}[3]{Rs}  🔗  ERP Matching (PO/WO/Abstract)")
         print(f"  {Bo}[4]{Rs}  📂  Output folder")
         print(f"  {Bo}[5]{Rs}  📁  Input folder")
-        print(f"  {Bo}[6]{Rs}  🚪  Exit")
+        print(f"  {Bo}[6]{Rs}  📧  Fetch invoices from email")
+        print(f"  {Bo}[7]{Rs}  🚪  Exit")
         sep()
-        c = input(f"  {Bo}▶{Rs}  Choice (1-6): ").strip()
+        c = input(f"  {Bo}▶{Rs}  Choice (1-7): ").strip()
         
-        if c == '6': print(f"\n  {Gn}{Bo}✓{Rs}  Done\n"); break
+         if c == '7': print(f"\n  {Gn}{Bo}✓{Rs}  Done\n"); break
+        elif c == '6':
+            print(f"\n  {'='*58}")
+            print(f"  {Bo}📧  EMAIL INVOICE PIPELINE{Rs}")
+            print(f"  {'='*58}")
+            try:
+                from email_listener import run_email_pipeline
+                results = run_email_pipeline()
+                if results:
+                    print(f"\n  {Bo}Processing fetched files...{Rs}")
+                    for r in results:
+                        fp = Path(r['file_path'])
+                        if fp.exists():
+                            print(f"\n  {Bo}[{ico(fp)}] {fp.name}{Rs} → {r['subsidiary']['name']}")
+                            result = process_one(ext, val, fp)
+                            if result:
+                                show(result[0], result[1])
+                else:
+                    inf("No new invoices found")
+            except ImportError:
+                er("email_listener.py not found in InvoicIQ folder")
+            except Exception as e:
+                er(f"Pipeline error: {e}")
+            input("\n  Press Enter to continue...")
         elif c == '5': os.startfile(os.path.abspath("input"))
         elif c == '4': os.startfile(os.path.abspath("output"))
         elif c == '3':
