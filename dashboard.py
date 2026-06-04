@@ -779,18 +779,16 @@ with tab3:
                             st.error("❌ REVIEW")
                         st.metric("Confidence", f"{v.get('confidence_score',0)}%")
         
-        # When Azure email is ready
         st.markdown("---")
-        st.info("""
-        ### 🔜 Coming Soon: Live Email Integration
+        st.success("""
+        ### ✅ Email Pipeline — Ready for Use
         
-        When Azure AD is configured, this tab will:
-        - 🔄 **Auto-fetch** invoices from `invoices@churchgate.com`
-        - 🏢 **Auto-detect** the correct subsidiary from email content
-        - 📎 **Auto-download** and process attachments
-        - 📊 **Auto-route** to the correct ERP instance
+        1. 📤 Upload invoice files above
+        2. 🏢 Select target subsidiary from dropdown  
+        3. 🚀 Click **Process Through Pipeline**
+        4. 📊 Results auto-routed to correct subsidiary
         
-        For now, use the upload section above to simulate email processing.
+        All processing uses Mistral AI + Gemini (100% free).
         """)
     
     except ImportError:
