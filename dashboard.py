@@ -10,7 +10,7 @@ from io import BytesIO
 from PIL import Image, ImageEnhance, ImageFilter
 import plotly.express as px
 import plotly.graph_objects as go
-from azure_extractor import DualAIEngine, AzureInvoiceExtractor
+from azure_extractor import DualAIEngine, MistralExtractor
 
 # ============================================
 # LOAD API KEY
@@ -302,11 +302,11 @@ with st.sidebar:
     else: st.error("🔑 API Key Missing")
     
     # Azure status
-    azure_check = AzureInvoiceExtractor()
-    if azure_check.is_configured:
-        st.success("☁️ Azure AI: Connected")
+    mistral_check = MistralExtractor()
+    if mistral_check.is_configured:
+        st.success("🤖 Mistral AI: Connected")
     else:
-        st.warning("☁️ Azure AI: Not Configured")
+        st.warning("🤖 Mistral AI: Not Configured")
     st.markdown("---")
     if 'count' not in st.session_state: st.session_state.count = 0
     if 'total_val' not in st.session_state: st.session_state.total_val = 0
@@ -392,9 +392,9 @@ with tab1:
     
     if uploaded and API_KEY:
         if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
-            azure_ext = AzureInvoiceExtractor()
+             mistral_ext = MistralExtractor()
             gemini_ext = Extractor(API_KEY)
-            dual_engine = DualAIEngine(azure_ext, gemini_ext)
+            dual_engine = DualAIEngine(mistral_ext, gemini_ext)
             extractor = Extractor(API_KEY)
             validator = Validator()
             results = []
