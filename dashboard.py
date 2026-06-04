@@ -392,9 +392,6 @@ with tab1:
     
     if uploaded and API_KEY:
             if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
-                mistral_ext = MistralExtractor()
-                gemini_ext = Extractor(API_KEY)
-                dual_engine = DualAIEngine(mistral_ext, gemini_ext)
                 extractor = Extractor(API_KEY)
                 validator = Validator()
                 results = []
@@ -438,7 +435,9 @@ with tab1:
                     if img: r = extractor.extract(img, enhance=True); r['_source'] = 'excel'
                     else: r = {"error": "Excel conversion failed"}
                 else:
-                    r = extractor.extract(fb, enhance=True); r['_source'] = 'image'
+                    r = extractor.extract(fb, enhance=True)
+                    if 'error' not in r:
+                        r['_source'] = 'image'
                 
                 if "error" in r: results.append({"file": file.name, "error": r["error"]})
                 else:
