@@ -390,61 +390,99 @@ with tab1:
     st.markdown("### 📤 Upload Invoices")
     uploaded = st.file_uploader("Drop invoice files — PDF, JPG, PNG, Excel", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True)
     
-   if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
-                extractor = Extractor(API_KEY)
-                validator = Validator()
-                results = []
-                prog = st.progress(0)
-                stat = st.empty()
-                start_time = time.time()
-                for i, file in enumerate(uploaded):
-                    stat.text(f"Processing {i+1}/{len(uploaded)}: {file.name}")
-                    fb = file.read()
-                    suf = Path(file.name).suffix.lower()
-                    
-                    r = None
-                    if suf == '.pdf':
-                        page_images = pdf_to_bytes(fb)
-                        if page_images:
-                            if len(page_images) > 1:
-                                all_pages = []
+   if uploaded and API_KEY:
+        if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
+            extractor = Extractor(API_KEY)
+            validator = Validator()
+            results = []
+            prog = st.progress(0)
+            stat = st.empty()
+            start_time = time.time()
+            
+            for i, file in enumerate(uploaded):
+                stat.text(f"Processing {i+1}/{len(uploaded)}: {file.name}")
+                fb = file.read()
+                suf = Path(file.name).suffix.lower()
+                
+                r = None
+                
+                if suf == '.pdf':
+                    page_images = pdf_to_bytes(fb)
+                    if page_images:
+                        if len(page_images) > 1:
+                            all_pages = []
                             for pimg in page_images:
                                 pr = extractor.extract(pimg, enhance=True)
-                                if 'error' not in pr: all_pages.append(pr)
+                                if 'error' not in pr:
+                                    all_pages.append(pr)
                             if all_pages:
                                 r = all_pages[0].copy()
                                 all_items = []
-                                for ap in all_pages: all_items.extend(ap.get('line_items',[]))
+                                for ap in all_pages:
+                                    all_items.extend(ap.get('line_items',[]) or [])
                                 r['line_items'] = all_items
                                 r['subtotal'] = sum(safe_float(ap.get('subtotal')) for ap in all_pages)
                                 r['tax_amount'] = sum(safe_float(ap.get('tax_amount')) for ap in all_pages)
                                 r['total_amount'] = sum(safe_float(ap.get('total_amount')) for ap in all_pages)
                                 for ap in all_pages:
-                                    if ap.get('vendor_name'): r['vendor_name'] = ap['vendor_name']; break
-                                    if ap.get('invoice_number'): r['invoice_number'] = ap['invoice_number']; break
+                                    if ap.get('vendor_name'): r['vendor_name'] = ap['vendor_name']
+                                    if ap.get('invoice_number'): r['invoice_number'] = ap['invoice_number']
                                 r['_source'] = 'pdf-multi'
-                            else: r = {"error": "No data from PDF pages"}
+                            else:
+                                r = {"error": "No data extracted from PDF pages"}
                         else:
                             r = extractor.extract(page_images[0], enhance=True)
-                            r['_source'] = 'pdf'
-                    else: r = {"error": "PDF conversion failed"}
+                            if 'error' not in r:
+                                r['_source'] = 'pdf'
+                            elif 'unavailable' in str(r.get('error','')).lower():
+                                r = {"error": "API rate limited. Wait 60 seconds and retry."}
+                    else:
+                        r = {"error": "PDF conversion failed. Run: pip install pymupdf"}
+                
                 elif suf in ['.xlsx','.xls']:
                     img = excel_to_bytes(fb)
-                    if img: r = extractor.extract(img, enhance=True); r['_source'] = 'excel'
-                    else: r = {"error": "Excel conversion failed"}
+                    if img:
+                        r = extractor.extract(img, enhance=True)
+                        if 'error' not in r:
+                            r['_source'] = 'excel'
+                        elif 'unavailable' in str(r.get('error','')).lower():
+                            r = {"error": "API rate limited. Wait 60 seconds and retry."}
+                    else:
+                        r = {"error": "Excel conversion failed"}
+                
                 else:
                     r = extractor.extract(fb, enhance=True)
                     if 'error' not in r:
                         r['_source'] = 'image'
+                    elif 'unavailable' in str(r.get('error','')).lower():
+                        r = {"error": "API rate limited. Wait 60 seconds and retry."}
                 
-                if "error" in r: results.append({"file": file.name, "error": r["error"]})
+                if r and "error" in r:
+                    results.append({"file": file.name, "error": r["error"]})
+                elif r:
+                    r = validator.validate(r)
+                    r['_file'] = file.name
+                    results.append(r)
+                    st.session_state.count += 1
+                    st.session_state.total_val += safe_float(r.get('total_amount'))
+                    st.session_state.history.append({
+                        'status': r.get('_validation',{}).get('status','?'),
+                        'currency': safe_str(r.get('currency'),'NGN'),
+                        'total': safe_float(r.get('total_amount')),
+                        'vendor': safe_str(r.get('vendor_name'),'N/A')
+                    })
                 else:
-                    r = validator.validate(r); r['_file'] = file.name; results.append(r)
-                    st.session_state.count += 1; st.session_state.total_val += safe_float(r.get('total_amount'))
-                    st.session_state.history.append({'status': r.get('_validation',{}).get('status','?'), 'currency': safe_str(r.get('currency'),'NGN'), 'total': safe_float(r.get('total_amount')), 'vendor': safe_str(r.get('vendor_name'),'N/A')})
+                    results.append({"file": file.name, "error": "Unknown processing error"})
+                
                 prog.progress((i+1)/len(uploaded))
+                
+                # Rate limit cooldown between AI-processed files
+                if i < len(uploaded) and suf not in ['.xlsx','.xls']:
+                    time.sleep(20)
+            
             elapsed = time.time() - start_time
-            stat.success(f"✅ {len(uploaded)} invoice(s) processed in {elapsed:.1f}s")
+            success_count = sum(1 for r in results if 'error' not in r)
+            stat.success(f"✅ {success_count}/{len(uploaded)} invoice(s) processed in {elapsed:.1f}s")
             st.session_state.results = results
             st.rerun()
     
