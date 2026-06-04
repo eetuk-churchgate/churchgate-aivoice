@@ -343,7 +343,7 @@ st.markdown(f"""
 # ============================================
 # TABS
 # ============================================
-tab1, tab2 = st.tabs(["📄 Invoice Processing", "🔗 ERP Matching (PO/WO/Abstract)"])
+tab1, tab2, tab3 = st.tabs(["📄 Invoice Processing", "🔗 ERP Matching (PO/WO/Abstract)", "📧 Email Pipeline"])
 
 # ============================================
 # TAB 1: INVOICE PROCESSING
@@ -602,3 +602,146 @@ with tab2:
                         rp = st.session_state.matcher.export_report()
                         with open(rp,'rb') as f: st.download_button("📊 Download Matching Report", f.read(), Path(rp).name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
                     except: pass
+
+# ============================================
+# TAB 3: EMAIL PIPELINE
+# ============================================
+with tab3:
+    st.markdown("### 📧 Email Invoice Pipeline")
+    st.markdown("Automatically fetch invoices from `invoices@churchgate.com` and route to the correct subsidiary")
+    
+    try:
+        from email_listener import SUBSIDIARIES
+        
+        # Status
+        col_status1, col_status2, col_status3 = st.columns(3)
+        with col_status1:
+            if os.getenv("AZURE_TENANT_ID"):
+                st.success("🔑 Azure Connected")
+            else:
+                st.warning("⚠️ Azure Not Configured (Simulated Mode)")
+        with col_status2:
+            st.metric("📧 Target Email", "invoices@churchgate.com")
+        with col_status3:
+            st.metric("🏢 Subsidiaries", len(SUBSIDIARIES))
+        
+        st.markdown("---")
+        
+        # Subsidiary grid
+        st.markdown("#### 🏢 Registered Subsidiaries")
+        sub_cols = st.columns(4)
+        for i, (key, sub) in enumerate(SUBSIDIARIES.items()):
+            with sub_cols[i % 4]:
+                st.markdown(f"""
+                <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:1rem;margin-bottom:0.5rem;text-align:center;">
+                    <strong>{sub['erp_code']}</strong><br>
+                    <small style="color:#64748b;">{sub['name'][:40]}</small>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Fetch button
+        st.markdown("#### 📥 Fetch & Process Emails")
+        col_btn1, col_btn2 = st.columns([1, 3])
+        with col_btn1:
+            fetch_clicked = st.button("📧 Fetch Invoice Emails", type="primary", use_container_width=True)
+        with col_btn2:
+            st.caption("Checks invoices@churchgate.com for new invoice emails, downloads attachments, detects subsidiary, and processes automatically")
+        
+        if fetch_clicked:
+            with st.spinner("Connecting to email server..."):
+                from email_listener import run_email_pipeline, SimulatedEmailFetcher
+                
+                fetcher = SimulatedEmailFetcher()
+                router = SubsidiaryRouter() if 'SubsidiaryRouter' in dir() else None
+                
+                st.info("🔄 Running in simulated mode — checking input folder for files")
+                
+                invoice_emails = fetcher.fetch_unread_invoices(minutes_back=1440)
+                
+                if not invoice_emails:
+                    st.info("📭 No new invoice emails found")
+                else:
+                    st.success(f"📧 Found {len(invoice_emails)} invoice email(s)")
+                    
+                    extractor = Extractor(API_KEY) if API_KEY else None
+                    validator = Validator()
+                    
+                    if 'email_results' not in st.session_state:
+                        st.session_state.email_results = []
+                    
+                    for i, email in enumerate(invoice_emails):
+                        with st.expander(f"📧 Email {i+1}: {email.get('subject','No Subject')[:80]}", expanded=(i==0)):
+                            col_a, col_b = st.columns(2)
+                            with col_a:
+                                st.markdown(f"**From:** {email.get('from',{}).get('emailAddress',{}).get('address','unknown')}")
+                                st.markdown(f"**Received:** {email.get('receivedDateTime','N/A')}")
+                                st.markdown(f"**🏢 Routed to:** Churchgate Group (CHGT) [Simulated]")
+                            
+                            with col_b:
+                                attachments = email.get("_local_file", [])
+                                if isinstance(attachments, str):
+                                    attachments = [attachments]
+                                
+                                if attachments:
+                                    st.markdown(f"**📎 Attachments:** {len(attachments)}")
+                                    for att in attachments:
+                                        att_path = Path(att)
+                                        st.markdown(f"• `{att_path.name}`")
+                                        
+                                        if extractor and att_path.exists():
+                                            with st.spinner(f"Processing {att_path.name}..."):
+                                                fb = att_path.read_bytes()
+                                                suf = att_path.suffix.lower()
+                                                img = None
+                                                if suf == '.pdf':
+                                                    imgs = pdf_to_bytes(fb)
+                                                    img = imgs[0] if isinstance(imgs, list) and imgs else imgs
+                                                elif suf in ['.xlsx','.xls']:
+                                                    img = excel_to_bytes(fb)
+                                                else:
+                                                    img = fb
+                                                
+                                                if img:
+                                                    res = extractor.extract(img, enhance=True)
+                                                    if 'error' not in res:
+                                                        res = validator.validate(res)
+                                                        res['_file'] = att_path.name
+                                                        res['_subsidiary'] = 'Churchgate Group (CHGT)'
+                                                        st.success(f"✅ {res.get('vendor_name','N/A')} | {res.get('total_amount',0):,.2f}")
+                                                        st.session_state.email_results.append(res)
+                                                    else:
+                                                        st.warning(f"⚠️ {res['error']}")
+                                else:
+                                    st.warning("No invoice attachments found")
+                    
+                    # Summary
+                    if st.session_state.email_results:
+                        st.markdown("---")
+                        st.markdown("### 📊 Pipeline Summary")
+                        summary_data = []
+                        for er in st.session_state.email_results:
+                            summary_data.append({
+                                'Vendor': safe_str(er.get('vendor_name')),
+                                'Invoice #': safe_str(er.get('invoice_number')),
+                                'Total': safe_float(er.get('total_amount')),
+                                'Status': str(er.get('_validation',{}).get('status',''))
+                            })
+                        st.dataframe(pd.DataFrame(summary_data), use_container_width=True, hide_index=True)
+                        csv_data = pd.DataFrame(summary_data).to_csv(index=False)
+                        st.download_button("📊 Download Pipeline Report", csv_data, "email_pipeline_report.csv", "text/csv", use_container_width=True)
+        
+        # History
+        if 'email_results' in st.session_state and st.session_state.email_results:
+            st.markdown("---")
+            st.markdown("### 📋 Pipeline History")
+            for i, er in enumerate(st.session_state.email_results):
+                with st.expander(f"📧 {safe_str(er.get('vendor_name'))} — {safe_float(er.get('total_amount')):,.2f}", expanded=False):
+                    st.markdown(f"**Vendor:** {safe_str(er.get('vendor_name'))}")
+                    st.markdown(f"**Invoice #:** {safe_str(er.get('invoice_number'))}")
+                    st.markdown(f"**Total:** {safe_float(er.get('total_amount')):,.2f}")
+    
+    except ImportError:
+        st.warning("⚠️ email_listener.py not found. Upload it to the project folder to enable the email pipeline.")
+        st.code("pip install msal requests")
