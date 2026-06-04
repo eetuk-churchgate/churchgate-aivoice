@@ -391,13 +391,13 @@ with tab1:
     uploaded = st.file_uploader("Drop invoice files — PDF, JPG, PNG, Excel", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True)
     
     if uploaded and API_KEY:
-        if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
-             mistral_ext = MistralExtractor()
-            gemini_ext = Extractor(API_KEY)
-            dual_engine = DualAIEngine(mistral_ext, gemini_ext)
-            extractor = Extractor(API_KEY)
-            validator = Validator()
-            results = []
+            if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
+                mistral_ext = MistralExtractor()
+                gemini_ext = Extractor(API_KEY)
+                dual_engine = DualAIEngine(mistral_ext, gemini_ext)
+                extractor = Extractor(API_KEY)
+                validator = Validator()
+                results = []
             prog = st.progress(0)
             stat = st.empty()
             start_time = time.time()
