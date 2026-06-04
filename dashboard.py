@@ -788,7 +788,7 @@ with tab3:
         3. 🚀 Click **Process Through Pipeline**
         4. 📊 Results auto-routed to correct subsidiary
         
-        All processing uses Mistral AI + Gemini (100% free).
+        All processing uses Mistral AI + Gemini.
         """)
     
     except ImportError:
