@@ -390,26 +390,24 @@ with tab1:
     st.markdown("### 📤 Upload Invoices")
     uploaded = st.file_uploader("Drop invoice files — PDF, JPG, PNG, Excel", type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'], accept_multiple_files=True)
     
-    if uploaded and API_KEY:
-            if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
+   if st.button("🚀 Process All Invoices", type="primary", use_container_width=True):
                 extractor = Extractor(API_KEY)
                 validator = Validator()
                 results = []
-            prog = st.progress(0)
-            stat = st.empty()
-            start_time = time.time()
-            for i, file in enumerate(uploaded):
-                stat.text(f"Processing {i+1}/{len(uploaded)}: {file.name}")
-                fb = file.read()
-                suf = Path(file.name).suffix.lower()
-                
-                r = None
-                if suf == '.pdf':
-                    page_images = pdf_to_bytes(fb)
-                    if page_images:
-                        if len(page_images) > 1:
-                            # Multi-page: extract from each page and merge
-                            all_pages = []
+                prog = st.progress(0)
+                stat = st.empty()
+                start_time = time.time()
+                for i, file in enumerate(uploaded):
+                    stat.text(f"Processing {i+1}/{len(uploaded)}: {file.name}")
+                    fb = file.read()
+                    suf = Path(file.name).suffix.lower()
+                    
+                    r = None
+                    if suf == '.pdf':
+                        page_images = pdf_to_bytes(fb)
+                        if page_images:
+                            if len(page_images) > 1:
+                                all_pages = []
                             for pimg in page_images:
                                 pr = extractor.extract(pimg, enhance=True)
                                 if 'error' not in pr: all_pages.append(pr)
