@@ -619,7 +619,7 @@ with tab2:
 # ============================================
 with tab3:
     st.markdown("### 📧 Email Invoice Pipeline")
-    st.markdown("Automatically fetch invoices from `invoices@churchgate.com` and route to the correct subsidiary")
+    st.markdown("Fetch invoices from `invoices@churchgate.com` or upload directly for processing")
     
     try:
         from email_listener import SUBSIDIARIES
@@ -649,107 +649,149 @@ with tab3:
         
         st.markdown("---")
         
-        # Fetch button
-        st.markdown("#### 📥 Fetch & Process Emails")
-        col_btn1, col_btn2 = st.columns([1, 3])
-        with col_btn1:
-            fetch_clicked = st.button("📧 Fetch Invoice Emails", type="primary", use_container_width=True)
-        with col_btn2:
-            st.caption("Checks invoices@churchgate.com for new invoice emails, downloads attachments, detects subsidiary, and processes automatically")
+        # UPLOAD SECTION — Works on Streamlit Cloud
+        st.markdown("#### 📤 Upload Invoices for Pipeline Processing")
+        st.caption("Upload invoice files as if they were received via email. Select the target subsidiary.")
         
-        if fetch_clicked:
-            with st.spinner("Connecting to email server..."):
-                from email_listener import run_email_pipeline, SimulatedEmailFetcher
-                
-                fetcher = SimulatedEmailFetcher()
-                router = SubsidiaryRouter() if 'SubsidiaryRouter' in dir() else None
-                
-                st.info("🔄 Running in simulated mode — checking input folder for files")
-                
-                invoice_emails = fetcher.fetch_unread_invoices(minutes_back=1440)
-                
-                if not invoice_emails:
-                    st.info("📭 No new invoice emails found")
-                else:
-                    st.success(f"📧 Found {len(invoice_emails)} invoice email(s)")
-                    
-                    extractor = Extractor(API_KEY) if API_KEY else None
-                    validator = Validator()
-                    
-                    if 'email_results' not in st.session_state:
-                        st.session_state.email_results = []
-                    
-                    for i, email in enumerate(invoice_emails):
-                        with st.expander(f"📧 Email {i+1}: {email.get('subject','No Subject')[:80]}", expanded=(i==0)):
-                            col_a, col_b = st.columns(2)
-                            with col_a:
-                                st.markdown(f"**From:** {email.get('from',{}).get('emailAddress',{}).get('address','unknown')}")
-                                st.markdown(f"**Received:** {email.get('receivedDateTime','N/A')}")
-                                st.markdown(f"**🏢 Routed to:** Churchgate Group (CHGT) [Simulated]")
-                            
-                            with col_b:
-                                attachments = email.get("_local_file", [])
-                                if isinstance(attachments, str):
-                                    attachments = [attachments]
-                                
-                                if attachments:
-                                    st.markdown(f"**📎 Attachments:** {len(attachments)}")
-                                    for att in attachments:
-                                        att_path = Path(att)
-                                        st.markdown(f"• `{att_path.name}`")
-                                        
-                                        if extractor and att_path.exists():
-                                            with st.spinner(f"Processing {att_path.name}..."):
-                                                fb = att_path.read_bytes()
-                                                suf = att_path.suffix.lower()
-                                                img = None
-                                                if suf == '.pdf':
-                                                    imgs = pdf_to_bytes(fb)
-                                                    img = imgs[0] if isinstance(imgs, list) and imgs else imgs
-                                                elif suf in ['.xlsx','.xls']:
-                                                    img = excel_to_bytes(fb)
-                                                else:
-                                                    img = fb
-                                                
-                                                if img:
-                                                    res = extractor.extract(img, enhance=True)
-                                                    if 'error' not in res:
-                                                        res = validator.validate(res)
-                                                        res['_file'] = att_path.name
-                                                        res['_subsidiary'] = 'Churchgate Group (CHGT)'
-                                                        st.success(f"✅ {res.get('vendor_name','N/A')} | {res.get('total_amount',0):,.2f}")
-                                                        st.session_state.email_results.append(res)
-                                                    else:
-                                                        st.warning(f"⚠️ {res['error']}")
-                                else:
-                                    st.warning("No invoice attachments found")
-                    
-                    # Summary
-                    if st.session_state.email_results:
-                        st.markdown("---")
-                        st.markdown("### 📊 Pipeline Summary")
-                        summary_data = []
-                        for er in st.session_state.email_results:
-                            summary_data.append({
-                                'Vendor': safe_str(er.get('vendor_name')),
-                                'Invoice #': safe_str(er.get('invoice_number')),
-                                'Total': safe_float(er.get('total_amount')),
-                                'Status': str(er.get('_validation',{}).get('status',''))
-                            })
-                        st.dataframe(pd.DataFrame(summary_data), use_container_width=True, hide_index=True)
-                        csv_data = pd.DataFrame(summary_data).to_csv(index=False)
-                        st.download_button("📊 Download Pipeline Report", csv_data, "email_pipeline_report.csv", "text/csv", use_container_width=True)
+        col_upload1, col_upload2 = st.columns([2, 1])
+        with col_upload1:
+            pipeline_files = st.file_uploader(
+                "Drop invoice files here — PDF, JPG, PNG, Excel",
+                type=['pdf','jpg','jpeg','png','bmp','tiff','tif','xlsx','xls'],
+                accept_multiple_files=True,
+                key="pipeline_upload"
+            )
+        with col_upload2:
+            target_subsidiary = st.selectbox(
+                "Route to Subsidiary",
+                options=[f"{sub['erp_code']} — {sub['name']}" for sub in SUBSIDIARIES.values()],
+                index=0
+            )
         
-        # History
-        if 'email_results' in st.session_state and st.session_state.email_results:
+        if pipeline_files and API_KEY:
+            if st.button("🚀 Process Through Pipeline", type="primary", use_container_width=True):
+                extractor = Extractor(API_KEY)
+                validator = Validator()
+                
+                if 'pipeline_results' not in st.session_state:
+                    st.session_state.pipeline_results = []
+                
+                prog = st.progress(0)
+                stat = st.empty()
+                
+                for i, file in enumerate(pipeline_files):
+                    stat.text(f"Pipeline processing {i+1}/{len(pipeline_files)}: {file.name}")
+                    
+                    # Extract subsidiary code from selection
+                    sub_code = target_subsidiary.split(" — ")[0]
+                    sub_name = target_subsidiary.split(" — ")[1]
+                    
+                    fb = file.read()
+                    suf = Path(file.name).suffix.lower()
+                    
+                    r = None
+                    if suf == '.pdf':
+                        page_images = pdf_to_bytes(fb)
+                        if page_images:
+                            img = page_images[0] if isinstance(page_images, list) and page_images else page_images
+                            if img:
+                                r = extractor.extract(img, enhance=True)
+                                if 'error' not in r:
+                                    r['_source'] = 'pipeline-pdf'
+                    elif suf in ['.xlsx','.xls']:
+                        img = excel_to_bytes(fb)
+                        if img:
+                            r = extractor.extract(img, enhance=True)
+                            if 'error' not in r:
+                                r['_source'] = 'pipeline-excel'
+                    else:
+                        r = extractor.extract(fb, enhance=True)
+                        if 'error' not in r:
+                            r['_source'] = 'pipeline-image'
+                    
+                    if r and 'error' not in r:
+                        r = validator.validate(r)
+                        r['_file'] = file.name
+                        r['_subsidiary'] = sub_name
+                        r['_subsidiary_code'] = sub_code
+                        r['_processed_via'] = 'Email Pipeline'
+                        st.session_state.pipeline_results.append(r)
+                        st.session_state.count += 1
+                        st.session_state.total_val += safe_float(r.get('total_amount'))
+                        st.session_state.history.append({
+                            'status': r.get('_validation',{}).get('status','?'),
+                            'currency': safe_str(r.get('currency'),'NGN'),
+                            'total': safe_float(r.get('total_amount')),
+                            'vendor': safe_str(r.get('vendor_name'),'N/A')
+                        })
+                    else:
+                        st.warning(f"⚠️ {file.name}: {r.get('error','Failed') if r else 'Failed'}")
+                    
+                    prog.progress((i+1)/len(pipeline_files))
+                
+                stat.success(f"✅ {len(pipeline_files)} file(s) processed through pipeline → {sub_name}")
+                st.rerun()
+        
+        # Show pipeline results
+        if 'pipeline_results' in st.session_state and st.session_state.pipeline_results:
             st.markdown("---")
-            st.markdown("### 📋 Pipeline History")
-            for i, er in enumerate(st.session_state.email_results):
-                with st.expander(f"📧 {safe_str(er.get('vendor_name'))} — {safe_float(er.get('total_amount')):,.2f}", expanded=False):
-                    st.markdown(f"**Vendor:** {safe_str(er.get('vendor_name'))}")
-                    st.markdown(f"**Invoice #:** {safe_str(er.get('invoice_number'))}")
-                    st.markdown(f"**Total:** {safe_float(er.get('total_amount')):,.2f}")
+            st.markdown("### 📊 Pipeline Processing Results")
+            
+            summary_data = []
+            for pr in st.session_state.pipeline_results:
+                summary_data.append({
+                    'Vendor': safe_str(pr.get('vendor_name')),
+                    'Invoice #': safe_str(pr.get('invoice_number')),
+                    'Total': safe_float(pr.get('total_amount')),
+                    'Subsidiary': pr.get('_subsidiary', 'N/A'),
+                    'Status': str(pr.get('_validation',{}).get('status',''))
+                })
+            
+            df_summary = pd.DataFrame(summary_data)
+            st.dataframe(df_summary, use_container_width=True, hide_index=True)
+            
+            # Export
+            csv_data = df_summary.to_csv(index=False)
+            st.download_button("📊 Download Pipeline Report", csv_data, "email_pipeline_report.csv", "text/csv", use_container_width=True)
+            
+            # Show detailed results
+            st.markdown("---")
+            st.markdown("### 📋 Detailed Results")
+            for i, pr in enumerate(st.session_state.pipeline_results):
+                v = pr.get('_validation', {})
+                sts = str(v.get('status', '?'))
+                vendor_disp = safe_str(pr.get('vendor_name'), 'Unknown', 30)
+                total_disp = safe_float(pr.get('total_amount'))
+                
+                with st.expander(f"📧 {vendor_disp} — {pr.get('_subsidiary','N/A')} | {safe_str(pr.get('currency'),'NGN')} {total_disp:,.2f}", expanded=(i==0)):
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        st.markdown(f"**Vendor:** {safe_str(pr.get('vendor_name'))}")
+                        st.markdown(f"**Invoice #:** {safe_str(pr.get('invoice_number'))}")
+                        st.markdown(f"**Routed to:** {pr.get('_subsidiary','N/A')} ({pr.get('_subsidiary_code','')})")
+                        st.markdown(f"**Total:** {safe_float(pr.get('total_amount')):,.2f}")
+                    with col_b:
+                        if sts == 'PASS':
+                            st.success("✅ PASSED")
+                        elif sts == 'WARN':
+                            st.warning("⚠️ WARNINGS")
+                        else:
+                            st.error("❌ REVIEW")
+                        st.metric("Confidence", f"{v.get('confidence_score',0)}%")
+        
+        # When Azure email is ready
+        st.markdown("---")
+        st.info("""
+        ### 🔜 Coming Soon: Live Email Integration
+        
+        When Azure AD is configured, this tab will:
+        - 🔄 **Auto-fetch** invoices from `invoices@churchgate.com`
+        - 🏢 **Auto-detect** the correct subsidiary from email content
+        - 📎 **Auto-download** and process attachments
+        - 📊 **Auto-route** to the correct ERP instance
+        
+        For now, use the upload section above to simulate email processing.
+        """)
     
     except ImportError:
-        st.warning("⚠️ email_listener.py not found. Upload it to the project folder to enable the email pipeline.")
-        st.code("pip install msal requests")
+        st.warning("⚠️ email_listener.py not found. Upload it to enable subsidiary routing.")
